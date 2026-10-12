@@ -17,6 +17,7 @@ import { useAuthoritativeMessages } from './chat/useAuthoritativeMessages'
 import { promptGuideCategories, promptGuideUiIcons, type PromptGuideConfigTarget, type PromptGuideItem } from './chat/promptGuideConfig'
 import { effectiveShortcutEntries, resolveShortcutGuideCategories } from './chat/shortcutGuideResolver'
 import { fetchEffectiveShortcuts } from '../api/shortcuts'
+import type { KnowledgeSourceSummary } from '../api/knowledgeSource'
 import PresentationEditor from './PresentationEditor.vue'
 import ExecutionViewV3 from '../features/execution-v3/components/ExecutionViewV3.vue'
 import ArtifactList from './execution/ArtifactList.vue'
@@ -471,6 +472,11 @@ const stickyTurnMinHeightPx = ref(0)
 const isNewSessionView = computed(() => displayMessages.value.length === 0)
 
 const activePromptGuideKey = ref<string | null>(null)
+const knowledgeSourceSummary = ref<KnowledgeSourceSummary>({ mode: 'movo', displayName: '' })
+function setKnowledgeSourceSummary(source: KnowledgeSourceSummary) {
+  knowledgeSourceSummary.value = source
+  if (source.mode === 'external' && activePromptGuideKey.value === 'internal') promptGuideNotice.value = null
+}
 const effectivePromptGuideCategories = ref(promptGuideCategories)
 const promptGuideNotice = ref<{
   title: string
@@ -485,7 +491,17 @@ const visiblePromptGuideCategories = computed(() => effectivePromptGuideCategori
       (item.categoryKey !== 'content' || allowContent.value)
       && (item.categoryKey !== 'internal' || allowKnowledge.value)
       && (item.categoryKey !== 'systems' || allowTools.value)) }
-    : category)
+    : category.key === 'internal' && knowledgeSourceSummary.value.mode === 'external'
+      ? {
+        ...category,
+        label: knowledgeSourceSummary.value.displayName,
+        requiresConfig: false,
+        items: category.items.map(item => ({
+          ...item,
+          prompt: item.prompt?.replaceAll('内部知识库', knowledgeSourceSummary.value.displayName),
+        })),
+      }
+      : category)
   .filter((category) => {
     if (category.key === 'content') return allowContent.value
     if (category.key === 'internal') return allowKnowledge.value
@@ -2337,6 +2353,7 @@ function formatErrorMessage(raw: string): string {
         @stop="emit('stop')"
         @select-model="selectChatModel"
         @image-preview="({ src, alt }) => openImagePreview(src, alt)"
+        @knowledge-source="setKnowledgeSourceSummary"
       >
         <template #context>
           <CodeDraftContextBar
