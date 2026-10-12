@@ -12,6 +12,7 @@ import CodeDraftContextBar from './code/CodeDraftContextBar.vue'
 import ChatComposer from './chat/ChatComposer.vue'
 import SessionRunNotice from './chat/SessionRunNotice.vue'
 import AssistantMarkdown from './chat/AssistantMarkdown.vue'
+import AssistantImagePreview from './chat/AssistantImagePreview.vue'
 import type { PendingDocument } from './chat/types'
 import { useAuthoritativeMessages } from './chat/useAuthoritativeMessages'
 import { promptGuideCategories, promptGuideUiIcons, type PromptGuideConfigTarget, type PromptGuideItem } from './chat/promptGuideConfig'
@@ -2167,6 +2168,7 @@ function formatErrorMessage(raw: string): string {
                 :content="msg.content"
                 :file-references="Boolean(props.codeSession)"
                 @open-file="(path) => emit('open-code-file', path)"
+                @image-preview="({ src, alt }) => openImagePreview(src, alt)"
               />
               <CodeTaskChangeCard
                 v-if="msg._codeChanges && props.codeSession"
@@ -2521,24 +2523,12 @@ function formatErrorMessage(raw: string): string {
       </div>
     </div>
   </div>
-  <div
+  <AssistantImagePreview
     v-if="imagePreviewOpen"
-    class="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4"
-    @click="closeImagePreview"
-  >
-    <button
-      class="absolute right-5 top-5 rounded-full bg-black/60 px-3 py-1 text-xl text-white"
-      @click.stop="closeImagePreview"
-    >
-      ×
-    </button>
-    <img
-      :src="imagePreviewSrc"
-      :alt="imagePreviewAlt"
-      class="max-h-[90vh] max-w-[92vw] rounded-xl bg-white object-contain shadow-2xl"
-      @click.stop
-    />
-  </div>
+    :src="imagePreviewSrc"
+    :alt="imagePreviewAlt"
+    @close="closeImagePreview"
+  />
 
   </BrowserWorkspace>
 
