@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onBeforeUnmount, ref } from 'vue'
 import { saveBlobDownload } from '../../utils/desktopResources'
+import { t } from '../../composables/i18n'
 
 const props = defineProps<{ src: string; alt: string }>()
 const emit = defineEmits<{ (event: 'close'): void }>()
 const closeButton = ref<HTMLButtonElement | null>(null)
 const downloading = ref(false)
-const downloadError = ref('')
+const downloadError = ref(false)
 const viewport = ref<HTMLDivElement | null>(null)
 const viewportSize = ref({ width: 0, height: 0 })
 const naturalSize = ref({ width: 0, height: 0 })
@@ -50,13 +51,13 @@ function imageFilename(): string {
 async function downloadImage() {
   if (downloading.value) return
   downloading.value = true
-  downloadError.value = ''
+  downloadError.value = false
   try {
     const response = await fetch(props.src)
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
     await saveBlobDownload(await response.blob(), imageFilename())
   } catch {
-    downloadError.value = '下载失败，请稍后重试'
+    downloadError.value = true
   } finally {
     downloading.value = false
   }
@@ -75,18 +76,18 @@ onBeforeUnmount(() => {
 
 <template>
   <Teleport to="body">
-    <div class="image-preview-backdrop" role="dialog" aria-modal="true" :aria-label="alt || '图片预览'" @click.self="emit('close')">
+    <div class="image-preview-backdrop" role="dialog" aria-modal="true" :aria-label="alt || t('chat.image_preview.title')" @click.self="emit('close')">
       <div class="image-preview-toolbar">
-        <button type="button" aria-label="缩小图片" :disabled="zoom <= 0.5" @click="changeZoom(zoom - 0.25)">−</button>
-        <button type="button" aria-label="还原图片大小" @click="changeZoom(1)">{{ Math.round(zoom * 100) }}%</button>
-        <button type="button" aria-label="放大图片" :disabled="zoom >= 3" @click="changeZoom(zoom + 0.25)">＋</button>
-        <button type="button" :disabled="downloading" @click="downloadImage">{{ downloading ? '下载中…' : '下载图片' }}</button>
-        <button ref="closeButton" type="button" aria-label="关闭图片预览" @click="emit('close')">关闭</button>
+        <button type="button" :aria-label="t('chat.image_preview.zoom_out')" :disabled="zoom <= 0.5" @click="changeZoom(zoom - 0.25)">−</button>
+        <button type="button" :aria-label="t('chat.image_preview.reset_zoom')" @click="changeZoom(1)">{{ Math.round(zoom * 100) }}%</button>
+        <button type="button" :aria-label="t('chat.image_preview.zoom_in')" :disabled="zoom >= 3" @click="changeZoom(zoom + 0.25)">＋</button>
+        <button type="button" :disabled="downloading" @click="downloadImage">{{ t(downloading ? 'chat.image_preview.downloading' : 'chat.image_preview.download') }}</button>
+        <button ref="closeButton" type="button" :aria-label="t('chat.image_preview.close')" @click="emit('close')">{{ t('ui.close') }}</button>
       </div>
       <div ref="viewport" class="image-preview-viewport" :class="{ 'is-overflowing': isOverflowing }" @click.self="emit('close')">
         <img :src="src" :alt="alt" class="image-preview-picture" :style="displayWidth ? { width: `${displayWidth}px` } : undefined" @load="onImageLoad" />
       </div>
-      <p v-if="downloadError" class="image-preview-error" role="alert">{{ downloadError }}</p>
+      <p v-if="downloadError" class="image-preview-error" role="alert">{{ t('chat.image_preview.download_failed') }}</p>
     </div>
   </Teleport>
 </template>
