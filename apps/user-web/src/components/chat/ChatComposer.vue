@@ -5,7 +5,7 @@ import { fetchSelectableSkills, type SelectableSkillItem } from '../../api/skill
 import { fetchKnowledgeSourceSummary, type KnowledgeSourceSummary } from '../../api/knowledgeSource'
 import { t, useLocale } from '../../composables/i18n'
 import type { ChatDocumentKind, PendingDocument } from './types'
-import { NModal } from 'naive-ui'
+import { NModal, useMessage } from 'naive-ui'
 import SkillFeedbackPanel from '../skills/SkillFeedbackPanel.vue'
 import ComposerActionButton from './ComposerActionButton.vue'
 import { useComposerAutofocus } from '../../composables/useComposerAutofocus'
@@ -41,6 +41,7 @@ const emit = defineEmits<{
 }>()
 
 const { locale } = useLocale()
+const message = useMessage()
 
 const userInput = ref('')
 const composerInputRef = ref<HTMLTextAreaElement | null>(null)
@@ -221,10 +222,19 @@ function onDocumentSelected(event: Event) {
   const input = event.target as HTMLInputElement
   if (!input.files || input.files.length === 0) return
   const files = Array.from(input.files)
+  const unsupportedNames: string[] = []
   for (const file of files) {
     const kind = detectDocumentType(file)
-    if (!kind) continue
+    if (!kind) {
+      unsupportedNames.push(file.name)
+      continue
+    }
     pendingDocuments.value.push({ file, kind })
+  }
+  if (unsupportedNames.length) {
+    message.error(locale.value === 'zh'
+      ? `不支持的文件类型：${unsupportedNames.join('、')}`
+      : `Unsupported file type: ${unsupportedNames.join(', ')}`)
   }
   input.value = ''
 }
