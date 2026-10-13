@@ -36,6 +36,7 @@ export interface ModelProviderItem {
 
 export interface ModelInstanceItem {
   id: string;
+  groupId: string;
   mainId: string;
   providerId: string;
   providerName: string;
@@ -62,6 +63,7 @@ export interface ModelInstanceItem {
 
 export interface ModelInstancePayload {
   providerId: string;
+  groupId?: string;
   orgId: string;
   displayName: string;
   modelName: string;
@@ -76,6 +78,44 @@ export interface ModelInstancePayload {
   status: ModelStatus;
   isDefault: boolean;
   priority?: number;
+}
+
+export interface ModelGroupItem {
+  id: string;
+  name: string;
+  providerId: string;
+  baseUrl: string;
+  apiVersion: string;
+  apiKeyMasked: string;
+  status: ModelStatus;
+}
+
+export interface ModelGroupPayload {
+  name: string;
+  providerId: string;
+  baseUrl: string;
+  apiVersion: string;
+  apiKey: string;
+  status: ModelStatus;
+}
+
+export async function fetchModelGroups() {
+  const { data } = await apiClient.get<ModelGroupItem[]>('/api/models/groups');
+  return data;
+}
+
+export async function createModelGroup(payload: ModelGroupPayload) {
+  const { data } = await apiClient.post<ModelGroupItem>('/api/models/groups', payload);
+  return data;
+}
+
+export async function updateModelGroup(id: string, payload: ModelGroupPayload) {
+  const { data } = await apiClient.put<ModelGroupItem>(`/api/models/groups/${id}`, payload);
+  return data;
+}
+
+export async function deleteModelGroup(id: string) {
+  await apiClient.delete(`/api/models/groups/${id}`);
 }
 
 export async function fetchModelProviders() {
