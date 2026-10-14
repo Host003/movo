@@ -10,6 +10,19 @@ export type Locale = 'zh' | 'en'
 export type MessageValue = string | Record<Locale, string>
 
 export const messages = {
+  'code.permission.heading': { zh: '应如何批准 MOVO 操作？', en: 'How should MOVO approve actions?' },
+  'code.permission.ask': { zh: '请求批准', en: 'Ask for approval' },
+  'code.permission.askHint': { zh: '编辑项目外文件等越界操作需要你批准', en: 'Ask before actions outside the project file sandbox' },
+  'code.permission.auto': { zh: '帮我批准', en: 'Auto review' },
+  'code.permission.autoHint': { zh: '独立审查器逐项审查文件沙箱越界操作；不确定时拒绝', en: 'An independent reviewer checks each file sandbox exception and denies uncertainty' },
+  'code.permission.full': { zh: '完全访问权限', en: 'Full access' },
+  'code.permission.fullHint': { zh: '不受文件沙箱限制，且不显示审批请求', en: 'No file sandbox and no approval prompts' },
+  'code.permission.custom': { zh: '自定义 (config.toml)', en: 'Custom (config.toml)' },
+  'code.permission.customHint': { zh: '使用本机配置文件设置文件沙箱与审批方式', en: 'Use a local config file for file sandbox and approvals' },
+  'code.permission.editConfig': { zh: '编辑自定义配置文件', en: 'Edit custom configuration' },
+  'code.permission.applyNextTurn': { zh: '保存文件后，再选择“自定义”进行校验；配置从下一回合生效。', en: 'Save the file, then select Custom to validate it. Changes take effect on the next turn.' },
+  'code.permission.invalidConfig': { zh: '配置文件无效。请检查三个设置项的名称和取值，保存后重新选择“自定义”。', en: 'Invalid configuration. Check the three setting names and values, save the file, then select Custom again.' },
+  'code.permission.networkLimit': { zh: '当前 DSH 仅隔离文件操作；联网不受此选项控制。', en: 'Current DSH modes only isolate file actions; this setting does not control network access.' },
   'session.snapshot.title': { zh: '分享的 Code 记录', en: 'Shared Code history' },
   'session.snapshot.readOnly': { zh: '只读快照 · 无法在此执行代码或继续对话', en: 'Read-only snapshot · Code execution and replies are unavailable' },
   'session.snapshot.unavailable': { zh: '记录不可用，请确认链接未过期且登录了分享者所在企业的账号。', en: 'This snapshot is unavailable. Check the link and sign in to the sharer’s organization.' },

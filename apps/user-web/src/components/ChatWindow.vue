@@ -9,6 +9,7 @@ import CodeHistoryReadOnlyNotice from './code/CodeHistoryReadOnlyNotice.vue'
 import CodeHistoryRestoringNotice from './code/CodeHistoryRestoringNotice.vue'
 import CodeTaskChangeCard from './code/CodeTaskChangeCard.vue'
 import CodeDraftContextBar from './code/CodeDraftContextBar.vue'
+import CodePermissionPicker from './code/CodePermissionPicker.vue'
 import ChatComposer from './chat/ChatComposer.vue'
 import SessionRunNotice from './chat/SessionRunNotice.vue'
 import AssistantMarkdown from './chat/AssistantMarkdown.vue'
@@ -39,7 +40,7 @@ import type { ExecutionStoreV3 } from '../features/execution-v3/stores/execution
 import { ensureMessageExecutionV3 } from '../features/execution-v3/stores/messageExecution'
 import { downloadResourceUrl, openPreviewResource, saveBlobDownload } from '../utils/desktopResources'
 import { normalizeAssistantContent, renderAssistantMarkdown, sanitizeMermaid } from '../utils/assistantMarkdown'
-import type { DshCodeSession, DshExecutionEvent, DshPendingApproval, DshTaskChangeSet, DshWorkspace } from '../platform/types'
+import type { CodePermissionMode, DshCodeSession, DshExecutionEvent, DshPendingApproval, DshTaskChangeSet, DshWorkspace } from '../platform/types'
 import { capabilities } from '../platform'
 import type { DesktopToolLauncherKind, DesktopToolTab } from './desktop/desktopToolTabs'
 import type { AgentPolicySnapshot } from '../api/auth'
@@ -94,6 +95,7 @@ const props = defineProps<{
   codeWorkspaceBusy?: boolean
   codeWorktree?: boolean
   codeSourceRef?: string
+  codePermissionMode?: CodePermissionMode
   codeHistoryReadOnly?: boolean
   codeHistoryRestoring?: boolean
   codeHistoryLocation?: 'desktop' | 'remote_sandbox'
@@ -150,6 +152,7 @@ const emit = defineEmits<{
   (e: 'clear-code-workspace'): void
   (e: 'code-worktree', enabled: boolean): void
   (e: 'code-source-ref', fullRef: string): void
+  (e: 'code-permission-mode', mode: CodePermissionMode): void
   (e: 'code-branch-updated', branch: string): void
   (e: 'code-approval', approvalId: string, decision: 'approved' | 'rejected', scope: 'once' | 'session'): void
   (e: 'close-code-panel'): void
@@ -2357,6 +2360,11 @@ function formatErrorMessage(raw: string): string {
         @image-preview="({ src, alt }) => openImagePreview(src, alt)"
         @knowledge-source="setKnowledgeSourceSummary"
       >
+        <template #model-actions>
+          <CodePermissionPicker v-if="capabilities.codeExecution && (props.codeWorkspace || props.codeSession)"
+            :model-value="props.codePermissionMode || 'ask'" :disabled="isLoading || props.codeWorkspaceBusy"
+            @update:model-value="(mode) => emit('code-permission-mode', mode)" />
+        </template>
         <template #context>
           <CodeDraftContextBar
             v-if="allowCode && isNewSessionView && capabilities.localWorkspacePicker"
