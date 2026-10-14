@@ -13,12 +13,12 @@ from fastapi import HTTPException
 
 
 def test_invite_link_uses_public_origin_and_local_portal() -> None:
-    assert resolve_portal_base("http://localhost:3000", "", "http://123.57.234.25:3001", "http://127.0.0.1:8100/") == "http://123.57.234.25:3001"
+    assert resolve_portal_base("http://localhost:3000", "", "http://192.0.2.25:3001", "http://127.0.0.1:8100/") == "http://192.0.2.25:3001"
     assert resolve_portal_base("http://localhost:3000", "", "http://localhost:3100", "http://127.0.0.1:8100/") == "http://localhost:3000"
-    assert resolve_portal_base("http://localhost:3000", "https://movo-test.askbot.cn", "http://localhost:3100", "http://127.0.0.1:8100/") == "http://localhost:3000"
-    assert resolve_portal_base("https://movo-test.askbot.cn", "https://movo-test.askbot.cn", "http://localhost:3100", "http://127.0.0.1:8100/") == "http://localhost:3000"
+    assert resolve_portal_base("http://localhost:3000", "https://movo.example.com", "http://localhost:3100", "http://127.0.0.1:8100/") == "http://localhost:3000"
+    assert resolve_portal_base("https://movo.example.com", "https://movo.example.com", "http://localhost:3100", "http://127.0.0.1:8100/") == "http://localhost:3000"
     assert request_portal_origin(SimpleNamespace(headers={"referer": "http://localhost:3100/organizations/users"})) == "http://localhost:3100/organizations/users"
-    assert resolve_portal_base("http://localhost:3000", "https://movo-test.askbot.cn", "https://movo-test.askbot.cn", "http://admin-api:8100/") == "https://movo-test.askbot.cn"
+    assert resolve_portal_base("http://localhost:3000", "https://movo.example.com", "https://movo.example.com", "http://admin-api:8100/") == "https://movo.example.com"
 
 
 def test_one_invite_registers_two_members_with_same_roles(monkeypatch) -> None:
