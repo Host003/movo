@@ -217,6 +217,7 @@
           <n-grid-item v-if="form.groupId" :span="2">
             <n-alert type="info" :bordered="false">{{ t('modelGroup.sharedConnection', { name: groups.find((item) => item.id === form.groupId)?.name || '' }) }}</n-alert>
           </n-grid-item>
+          <n-grid-item :span="2"><ModelPricingFields v-model="form.pricing" /></n-grid-item>
           <n-grid-item v-if="hasImageCapability" :span="2">
             <ImageModelRuntimeFields
               v-model:runtimeKind="form.runtimeKind"
@@ -306,6 +307,7 @@ import PageIntro from '@/components/PageIntro.vue';
 import { t } from '@/composables/i18n';
 import { formatAdminDateTime } from '@/composables/adminTimezone';
 import ImageModelRuntimeFields from '@/components/models/ImageModelRuntimeFields.vue';
+import ModelPricingFields from '@/components/models/ModelPricingFields.vue';
 import ModelGroupCard from '@/components/models/ModelGroupCard.vue';
 import ModelGroupEditor from '@/components/models/ModelGroupEditor.vue';
 import {
@@ -325,6 +327,7 @@ import {
   type ModelStatus,
   type ImageModelSettings,
   type ImageRuntimeKind,
+  type ModelPricing,
 } from '@/api/models';
 import { fetchTrafficAllocationOverview } from '@/api/traffic-allocations';
 import { capabilityLabel } from '@/components/models/capabilityLabels';
@@ -339,6 +342,7 @@ interface ModelForm extends ModelInstancePayload {
   apiKeyMasked: string;
   runtimeKind: ImageRuntimeKind | '';
   imageSettings: ImageModelSettings;
+  pricing: ModelPricing | null;
 }
 
 const loading = ref(false);
@@ -384,6 +388,7 @@ const defaultForm = (): ModelForm => ({
   capabilities: ['chat'],
   runtimeKind: '',
   imageSettings: {},
+  pricing: null,
   status: 'active',
   isDefault: false,
 });
@@ -588,6 +593,7 @@ function openEdit(row: ModelInstanceItem) {
     capabilities: [...row.capabilities],
     runtimeKind: row.runtimeKind || recommendedImageRuntime(providerMap.value.get(row.providerId)),
     imageSettings: { ...(row.imageSettings || {}) },
+    pricing: row.pricing ? { ...row.pricing } : null,
     status: row.status,
     isDefault: false,
   };
@@ -642,6 +648,7 @@ async function saveModel() {
       capabilities: form.value.capabilities.length ? form.value.capabilities : ['chat'],
       runtimeKind: hasImageCapability.value ? form.value.runtimeKind || recommendedImageRuntime(currentProvider.value) : '',
       imageSettings: hasImageCapability.value ? { ...form.value.imageSettings } : {},
+      pricing: form.value.pricing,
       maxContextTokens: 0,
       status: form.value.status,
       isDefault: false,

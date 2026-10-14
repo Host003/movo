@@ -154,6 +154,7 @@ async def create_instance(payload: dict[str, Any]) -> str:
         "last_error": "",
         "is_default": bool(payload.get("is_default", False)),
         "priority": int(payload.get("priority") or 100),
+        "pricing": payload.get("pricing"),
         "created_at": now,
         "updated_at": now,
     }
@@ -182,6 +183,7 @@ async def update_instance(instance_id: str, payload: dict[str, Any]) -> bool:
         "status": payload.get("status") or "active",
         "is_default": bool(payload.get("is_default", False)),
         "priority": int(payload.get("priority") or 100),
+        "pricing": payload.get("pricing"),
         "updated_at": utcnow(),
     }
     if payload.get("settings") is not None:

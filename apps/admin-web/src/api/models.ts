@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth';
 export type ModelStatus = 'active' | 'disabled';
 export type HealthStatus = 'unknown' | 'healthy' | 'failed';
 export type ImageRuntimeKind = 'openai_images' | 'azure_openai_images' | 'dashscope_image' | 'custom_images';
+export interface ModelPricing { currency: 'CNY' | 'USD'; inputPerMillion: number; outputPerMillion: number }
 
 const IMAGE_MODEL_TEST_TIMEOUT_MS = 10 * 60 * 1000;
 
@@ -59,6 +60,7 @@ export interface ModelInstanceItem {
   isDefault: boolean;
   priority: number;
   updatedAt: string;
+  pricing: ModelPricing | null;
 }
 
 export interface ModelInstancePayload {
@@ -78,6 +80,7 @@ export interface ModelInstancePayload {
   status: ModelStatus;
   isDefault: boolean;
   priority?: number;
+  pricing?: ModelPricing | null;
 }
 
 export interface ModelGroupItem {

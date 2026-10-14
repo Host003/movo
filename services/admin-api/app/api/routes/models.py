@@ -37,6 +37,7 @@ from app.services.image_model_configuration import (
 )
 from app.services.model_image_connectivity import run_saved_image_model_test
 from app.services.model_test_tls import build_model_test_ssl_context
+from app.services.model_pricing import normalize_pricing
 from app.api.routes import model_knowledge_tests
 from app.api.routes import model_groups
 from app.repositories.model_group_repository import find_group, list_groups
@@ -88,6 +89,10 @@ def _format_instance(doc: dict[str, Any], provider_map: dict[str, dict[str, Any]
         model_name=str(doc.get("model_name") or ""),
         raw=doc.get("settings"),
     )
+    try:
+        pricing = normalize_pricing(doc.get("pricing"))
+    except ValueError:
+        pricing = None
     return {
         "id": str(doc["_id"]),
         "mainId": doc.get("main_id", ""),
@@ -112,6 +117,10 @@ def _format_instance(doc: dict[str, Any], provider_map: dict[str, dict[str, Any]
         "lastError": doc.get("last_error", ""),
         "isDefault": bool(doc.get("is_default", False)),
         "priority": doc.get("priority", 100),
+        "pricing": (
+            {"currency": pricing["currency"], "inputPerMillion": float(pricing["inputPerMillion"]), "outputPerMillion": float(pricing["outputPerMillion"])}
+            if pricing else None
+        ),
         "updatedAt": _as_time(doc.get("updated_at")),
     }
 
@@ -133,10 +142,18 @@ class ModelInstancePayload(BaseModel):
     status: str = Field(default="active", pattern=r"^(active|disabled)$")
     isDefault: bool = False
     priority: int = Field(default=100, ge=1, le=999)
+    pricing: dict[str, Any] | None = None
 
 
 class ModelTestPayload(BaseModel):
     prompt: str = Field(default="请用一句话回复当前模型连接测试。", max_length=500)
+
+
+def _validated_pricing(value: Any) -> dict[str, Any] | None:
+    try:
+        return normalize_pricing(value)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.get("/providers")
@@ -240,6 +257,7 @@ async def post_model_instance(
                 "max_context_tokens": payload.maxContextTokens,
                 "is_default": payload.isDefault,
                 "main_id": main_id,
+                "pricing": _validated_pricing(payload.pricing),
             }
         )
     except DuplicateKeyError as exc:
@@ -315,6 +333,7 @@ async def put_model_instance(
                 "max_context_tokens": payload.maxContextTokens,
                 "is_default": payload.isDefault,
                 "main_id": main_id,
+                "pricing": _validated_pricing(payload.pricing),
             },
         )
     except InvalidId as exc:

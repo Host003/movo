@@ -2,9 +2,10 @@
 import { computed, ref, watch } from 'vue';
 import { useMessage } from 'naive-ui';
 import { t } from '@/composables/i18n';
-import { createModelInstance, deleteModelInstance, updateModelInstance, type ImageModelSettings, type ImageRuntimeKind, type ModelGroupItem, type ModelInstanceItem, type ModelInstancePayload, type ModelProviderItem, type ModelStatus } from '@/api/models';
+import { createModelInstance, deleteModelInstance, updateModelInstance, type ImageModelSettings, type ImageRuntimeKind, type ModelGroupItem, type ModelInstanceItem, type ModelInstancePayload, type ModelProviderItem, type ModelStatus, type ModelPricing } from '@/api/models';
 import adminProductUiExtension from '@movo-admin-product-extension';
 import ImageModelRuntimeFields from './ImageModelRuntimeFields.vue';
+import ModelPricingFields from './ModelPricingFields.vue';
 import ModelAccessExtensionPanel from './ModelAccessExtensionPanel.vue';
 import { capabilityLabel } from './capabilityLabels';
 import { modelApiErrorText } from './modelApiError';
@@ -23,7 +24,7 @@ const open = ref(Boolean(props.expanded || !props.model));
 const saving = ref(false);
 const accessLoading = ref(false);
 const access = ref<unknown>(extension?.createValue(true));
-const form = ref({ displayName: '', modelName: '', capabilities: ['chat'] as string[], status: 'active' as ModelStatus, runtimeKind: '' as ImageRuntimeKind | '', imageSettings: {} as ImageModelSettings });
+const form = ref({ displayName: '', modelName: '', capabilities: ['chat'] as string[], status: 'active' as ModelStatus, runtimeKind: '' as ImageRuntimeKind | '', imageSettings: {} as ImageModelSettings, pricing: null as ModelPricing | null });
 const imageModel = computed(() => form.value.capabilities.includes('image_generation'));
 const selectable = computed(() => form.value.capabilities.some((item) => ['chat', 'text', 'image_generation'].includes(item)));
 const capabilityOptions = computed(() => ['chat', 'vision', 'embedding', 'rerank', 'image_generation'].map((value) => ({ label: capabilityLabel(value), value })));
@@ -32,8 +33,8 @@ const runtimeDefault = computed<ImageRuntimeKind>(() => props.provider?.provider
 watch(() => props.model?.id, async () => {
   const model = props.model;
   form.value = model
-    ? { displayName: model.displayName, modelName: model.modelName, capabilities: [...model.capabilities], status: model.status, runtimeKind: model.runtimeKind || runtimeDefault.value, imageSettings: { ...model.imageSettings } }
-    : { displayName: '', modelName: '', capabilities: ['chat'], status: 'active', runtimeKind: runtimeDefault.value, imageSettings: {} };
+    ? { displayName: model.displayName, modelName: model.modelName, capabilities: [...model.capabilities], status: model.status, runtimeKind: model.runtimeKind || runtimeDefault.value, imageSettings: { ...model.imageSettings }, pricing: model.pricing ? { ...model.pricing } : null }
+    : { displayName: '', modelName: '', capabilities: ['chat'], status: 'active', runtimeKind: runtimeDefault.value, imageSettings: {}, pricing: null };
   access.value = extension?.createValue(true);
   if (model && extension && model.capabilities.some((item) => ['chat', 'text', 'image_generation'].includes(item))) {
     accessLoading.value = true;
@@ -64,6 +65,7 @@ async function save() {
       runtimeKind: imageModel.value ? form.value.runtimeKind : '', imageSettings: imageModel.value ? { ...form.value.imageSettings } : {},
       maxContextTokens: props.model?.maxContextTokens || 0, status: form.value.status,
       isDefault: props.model?.isDefault || false, priority: props.model?.priority || 100,
+      pricing: form.value.pricing,
     };
     const saved = props.model ? await updateModelInstance(props.model.id, payload) : await createModelInstance(payload);
     if (selectable.value && extension) {
@@ -103,6 +105,7 @@ async function remove() {
           <n-form-item :label="t('能力')"><n-select v-model:value="form.capabilities" multiple :options="capabilityOptions" /></n-form-item>
           <n-form-item :label="t('状态')"><n-select v-model:value="form.status" :options="[{ label: t('modelGroup.active'), value: 'active' }, { label: t('modelGroup.disabled'), value: 'disabled' }]" /></n-form-item>
         </div>
+        <ModelPricingFields v-model="form.pricing" />
         <n-collapse v-if="imageModel"><n-collapse-item :title="t('modelGroup.imageSettings')" name="image"><ImageModelRuntimeFields v-model:runtimeKind="form.runtimeKind" v-model:imageSettings="form.imageSettings" :provider-type="provider?.providerType || ''" /></n-collapse-item></n-collapse>
         <n-collapse v-if="extension && selectable"><n-collapse-item :title="t('modelGroup.memberAccess')" name="access"><ModelAccessExtensionPanel v-model="access" :loading="accessLoading" grouped /></n-collapse-item></n-collapse>
       </n-form>
