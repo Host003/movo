@@ -10,6 +10,15 @@ export type Locale = 'zh' | 'en'
 export type MessageValue = string | Record<Locale, string>
 
 export const messages = {
+  'session.snapshot.title': { zh: '分享的 Code 记录', en: 'Shared Code history' },
+  'session.snapshot.readOnly': { zh: '只读快照 · 无法在此执行代码或继续对话', en: 'Read-only snapshot · Code execution and replies are unavailable' },
+  'session.snapshot.unavailable': { zh: '记录不可用，请确认链接未过期且登录了分享者所在企业的账号。', en: 'This snapshot is unavailable. Check the link and sign in to the sharer’s organization.' },
+  'session.snapshot.user': { zh: '用户', en: 'User' },
+  'session.snapshot.assistant': { zh: '助手', en: 'Assistant' },
+  'session.snapshot.hint': { zh: '链接仅供同企业已登录用户查看，保存当前已完成的对话文字，不包含本地代码文件。', en: 'Signed-in members of this organization can view a snapshot of the current conversation text. Local code files are excluded.' },
+  'session.snapshot.create': { zh: '生成只读链接', en: 'Create read-only link' },
+  'session.snapshot.createFailed': { zh: '生成链接失败，请检查用户端公开地址配置。', en: 'Could not create the link. Check the public user portal URL.' },
+  'session.snapshot.revokeFailed': { zh: '撤销链接失败', en: 'Could not revoke the link' },
   'invite.title': { zh: '加入企业', en: 'Join an organization' },
   'invite.description': { zh: '填写邀请码，创建企业员工账号。', en: 'Enter an invitation code to create your employee account.' },
   'invite.code': { zh: '邀请码', en: 'Invitation code' },
