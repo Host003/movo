@@ -22,6 +22,7 @@ function safeExternalHref(value: string): string | undefined {
 export function projectSafeMarkdownLinks(
   text: string,
   render: (label: string, href: string) => string,
+  renderArtifact?: (label: string, objectPath: string) => string | undefined,
 ): string {
   let output = ''
   let cursor = 0
@@ -56,9 +57,10 @@ export function projectSafeMarkdownLinks(
       continue
     }
     const label = text.slice(start + 1, labelEnd)
-    const href = safeExternalHref(text.slice(labelEnd + 2, end).trim())
+    const target = text.slice(labelEnd + 2, end).trim()
+    const href = safeExternalHref(target)
     if (!href) {
-      output += text.slice(start, end + 1)
+      output += renderArtifact?.(escapeHtml(label), target) ?? text.slice(start, end + 1)
     } else {
       output += render(escapeHtml(label), href)
     }

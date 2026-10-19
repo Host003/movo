@@ -60,7 +60,7 @@ export function workspaceFileReference(value: string): string | null {
   return FILE_EXTENSION.test(name) || WELL_KNOWN_FILE.test(name) ? path : null
 }
 
-export function renderAssistantMarkdown(text: string, options: { workspaceFileReferences?: boolean } = {}): string {
+export function renderAssistantMarkdown(text: string, options: { workspaceFileReferences?: boolean; artifactPaths?: string[] } = {}): string {
   const extracted = extractAssistantCodeBlocks(normalizeAssistantContent(text), sanitizeMermaid)
   let html = extracted.text
   const blocks: string[] = [...extracted.blocks]
@@ -81,9 +81,12 @@ export function renderAssistantMarkdown(text: string, options: { workspaceFileRe
     }
     return `<code class="assistant-inline-code">${escapeHtml(content)}</code>`
   })
+  const artifactPaths = new Set(options.artifactPaths || [])
   html = projectSafeMarkdownLinks(html, (label, href) => stash(
     `<a href="${href}" target="_blank" rel="noopener noreferrer nofollow" class="text-blue-600 hover:text-blue-500 underline underline-offset-2">${label}</a>`,
-  ))
+  ), (label, path) => artifactPaths.has(path) ? stash(
+    `<button type="button" data-artifact-path="${escapeHtml(path)}" class="text-blue-600 hover:text-blue-500 underline underline-offset-2">${label}</button>`,
+  ) : undefined)
   html = html.replace(/\|(.+)\|/g, (_match, content) => {
     const cells = String(content).split('|').map(cell => cell.trim()).filter(Boolean)
     return `<tr>${cells.map(cell => `<td class="border border-gray-300 px-3 py-2">${cell}</td>`).join('')}</tr>`

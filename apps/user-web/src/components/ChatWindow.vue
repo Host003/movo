@@ -49,6 +49,7 @@ import { listSessionParticipants } from '../api/sessionSharing'
 import type { ChatMessageAuthor } from '../api/sessions'
 import { resolveArtifactIcon, resolveArtifactPresentation } from '../registries'
 import { resolveArtifactKind } from '../features/execution-v3/domain/artifactKind'
+import { visibleAnswerArtifacts } from '../features/execution-v3/domain/artifactVisibility'
 import { authenticatedJsonHeaders } from '../api/authHeaders'
 import { agentResourceFamilyAvailable } from '../composables/useEnterpriseAccessPolicy'
 import type { ForeignRun } from '../composables/sessionRunPresence'
@@ -841,6 +842,16 @@ function onArtifactPreviewHtml(a: ArtifactItem) {
 }
 function onArtifactDownload(a: ArtifactItem) {
   return downloadDocument(artifactToDocumentInfo(a))
+}
+
+function visibleMessageArtifacts(msg: Message): ArtifactItem[] {
+  const state = artifactStore(msg).state
+  return visibleAnswerArtifacts(state.artifacts, state.runStatus, msg.content || '')
+}
+
+function downloadMessageArtifact(msg: Message, objectPath: string) {
+  const artifact = visibleMessageArtifacts(msg).find((item) => item.object_path === objectPath)
+  if (artifact) onArtifactDownload(artifact)
 }
 
 
@@ -2199,7 +2210,9 @@ function formatErrorMessage(raw: string): string {
                 v-else-if="msg.content"
                 class="assistant-content"
                 :content="msg.content"
+                :artifact-paths="visibleMessageArtifacts(msg).map((item) => item.object_path || '').filter(Boolean)"
                 :file-references="Boolean(props.codeSession)"
+                @download-artifact="(path) => downloadMessageArtifact(msg, path)"
                 @open-file="(path) => emit('open-code-file', path)"
                 @image-preview="({ src, alt }) => openImagePreview(src, alt)"
               />
