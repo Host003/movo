@@ -7,9 +7,9 @@ import type { ArtifactItem } from '../../features/execution-v3/domain/delivery'
 import { visibleAnswerArtifacts } from '../../features/execution-v3/domain/artifactVisibility'
 import ArtifactRow from './ArtifactRow.vue'
 
-const props = defineProps<{ store: { state: { artifacts: ArtifactItem[]; runStatus: string } }; answer: string }>()
+const props = defineProps<{ store: { state: { artifacts: ArtifactItem[]; runStatus: string } } }>()
 const visibleArtifacts = computed(() => visibleAnswerArtifacts(
-  props.store.state.artifacts, props.store.state.runStatus, props.answer,
+  props.store.state.artifacts, props.store.state.runStatus,
 ))
 const emit = defineEmits<{
   (e: 'open',     a: ArtifactItem): void

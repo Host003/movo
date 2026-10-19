@@ -60,7 +60,8 @@ export function projectSafeMarkdownLinks(
     const target = text.slice(labelEnd + 2, end).trim()
     const href = safeExternalHref(target)
     if (!href) {
-      output += renderArtifact?.(escapeHtml(label), target) ?? text.slice(start, end + 1)
+      // A model-provided internal target is never a download authority.
+      output += renderArtifact?.(escapeHtml(label), target) ?? escapeHtml(label)
     } else {
       output += render(escapeHtml(label), href)
     }
