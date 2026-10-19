@@ -2216,6 +2216,7 @@ function formatErrorMessage(raw: string): string {
               <div class="mt-3">
                 <ArtifactList
                   :store="artifactStore(msg)"
+                  :answer="msg.content"
                   @open="(a: ArtifactItem) => onArtifactOpen(a, msg, idx)"
                   @edit="(a: ArtifactItem) => onArtifactEditPresentation(a, msg)"
                   @export="(a: ArtifactItem) => onArtifactExportPresentation(a, msg)"
