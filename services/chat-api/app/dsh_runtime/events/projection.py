@@ -269,14 +269,17 @@ class KernelEventProjector:
         if not isinstance(message, dict):
             return True, "", "", None
         texts: list[str] = []
-        is_error = bool(message.get("error"))
+        is_error = bool(message.get("error") or message.get("isError"))
         for block in list(message.get("content") or []):
-            if not isinstance(block, dict) or block.get("type") != "tool-result":
+            if not isinstance(block, dict):
                 continue
-            is_error = is_error or bool(block.get("isError"))
-            for part in list(block.get("content") or []):
-                if isinstance(part, dict) and part.get("type") == "text":
-                    texts.append(str(part.get("text") or ""))
+            if block.get("type") == "text":
+                texts.append(str(block.get("text") or ""))
+            elif block.get("type") == "tool-result":
+                is_error = is_error or bool(block.get("isError"))
+                for part in list(block.get("content") or []):
+                    if isinstance(part, dict) and part.get("type") == "text":
+                        texts.append(str(part.get("text") or ""))
         summary = "\n".join(value for value in texts if value).strip()[:1000]
         decoded: Any = None
         if len(texts) == 1:
