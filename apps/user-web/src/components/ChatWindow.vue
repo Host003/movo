@@ -12,6 +12,9 @@ import CodeTaskChangeCard from './code/CodeTaskChangeCard.vue'
 import CodeDraftContextBar from './code/CodeDraftContextBar.vue'
 import CodePermissionPicker from './code/CodePermissionPicker.vue'
 import ChatComposer from './chat/ChatComposer.vue'
+import UserQuestionPanel from './chat/UserQuestionPanel.vue'
+import AnsweredQuestionMessage from './chat/AnsweredQuestionMessage.vue'
+import { expandQuestionAnswers, type QuestionAnswerEntry } from './chat/questionAnswerHistory'
 import SessionRunNotice from './chat/SessionRunNotice.vue'
 import AssistantMarkdown from './chat/AssistantMarkdown.vue'
 import AssistantImagePreview from './chat/AssistantImagePreview.vue'
@@ -32,6 +35,7 @@ import type { ArtifactItem, EvidenceBundleItem, EvidenceSourceItem } from '../fe
 import { evidenceSourceStats } from '../features/execution-v3/domain/evidenceSourceGroups'
 import { resolvePermission } from '../composables/useChatStream'
 import { useDshToolApprovals } from '../composables/useDshToolApprovals'
+import { useUserQuestions } from '../composables/useUserQuestions'
 import { mergeEvidenceBundles } from '../composables/evidenceBundles'
 import { t, useLocale } from '../composables/i18n'
 import { formatAppTime } from '../composables/appTimezone'
@@ -186,6 +190,8 @@ interface Message {
   author?: ChatMessageAuthor | null
   /** Persisted V3 events returned by GET /sessions/{id} for replay. */
   execution_events?: unknown[]
+  question_answers?: QuestionAnswerEntry[]
+  question_answer?: QuestionAnswerEntry
   trigger_source?: string
   scheduled_job_id?: string
   scheduled_run_id?: string
@@ -323,11 +329,14 @@ const displayMessages = computed(() => {
       if (msg._codeChanges && !prev._codeChanges) {
         result[result.length - 1] = { ...prev, _codeChanges: msg._codeChanges }
       }
+      if (msg.question_answers?.length && !prev.question_answers?.length) {
+        result[result.length - 1] = { ...result[result.length - 1], question_answers: msg.question_answers }
+      }
       continue
     }
     result.push(msg)
   }
-  return result
+  return expandQuestionAnswers(result, questionControl.submitted.value)
 })
 
 // Author labels (todo 28): names resolve from the session members list, fetched
@@ -732,6 +741,14 @@ const approvalControl = useDshToolApprovals({
 const activeDshApprovals = approvalControl.active
 const approvalBusy = approvalControl.busy
 const approvalErrors = approvalControl.errors
+const questionControl = useUserQuestions({
+  active: () => props.active,
+  conversationId: () => props.sessionId,
+  codeSessionId: () => props.codeSession?.kernel_session_id,
+  token: () => props.authToken,
+  running: () => Boolean(props.running || isLoading.value),
+  assistantMessageId: () => [...messages.value].reverse().find(message => message.role === 'assistant')?.message_id,
+})
 
 function artifactToDocumentInfo(a: ArtifactItem): DocumentInfo {
   return {
@@ -2267,7 +2284,8 @@ function formatErrorMessage(raw: string): string {
                   <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
                   定时任务自动发送
                 </div>
-                <div class="whitespace-pre-wrap leading-7">{{ normalizeUserContent(msg.content) }}</div>
+                <AnsweredQuestionMessage v-if="msg.question_answer" :entry="msg.question_answer" />
+                <div v-else class="whitespace-pre-wrap leading-7">{{ normalizeUserContent(msg.content) }}</div>
                 <div v-if="msg.images?.length" class="mt-3 flex flex-wrap gap-2">
                 <img
                   v-for="(img, imgIdx) in msg.images"
@@ -2340,6 +2358,16 @@ function formatErrorMessage(raw: string): string {
 
     <!-- New composer-area features should be mounted as child components or slot content here. -->
     <div ref="composerContainer" class="shrink-0">
+      <div v-if="questionControl.pending.value.length" class="mx-auto w-full max-w-4xl px-4 md:px-6">
+        <UserQuestionPanel
+          v-for="question in questionControl.pending.value"
+          :key="question.id"
+          :item="question"
+          :busy="questionControl.busy.value"
+          :error="questionControl.error.value"
+          @submit="answers => questionControl.answer(question, answers)"
+        />
+      </div>
       <div v-if="props.foreignRun || props.foreignRunFinished" class="px-4 md:px-6">
         <SessionRunNotice
           :running="Boolean(props.foreignRun)"

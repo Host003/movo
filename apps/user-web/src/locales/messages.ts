@@ -10,6 +10,13 @@ export type Locale = 'zh' | 'en'
 export type MessageValue = string | Record<Locale, string>
 
 export const messages = {
+  'chat.question.title': { zh: '需要你的回答', en: 'Your input is needed' },
+  'chat.question.subtitle': { zh: '回答后，助手会继续处理当前问题', en: 'The assistant will continue after you answer' },
+  'chat.question.other': { zh: '填写其他答案', en: 'Enter another answer' },
+  'chat.question.placeholder': { zh: '请输入你的回答', en: 'Type your answer' },
+  'chat.question.submit': { zh: '提交回答', en: 'Submit answer' },
+  'chat.question.submitting': { zh: '正在提交…', en: 'Submitting…' },
+  'chat.question.answered': { zh: '已回答提问', en: 'Questions answered' },
   'code.permission.heading': { zh: '应如何批准 MOVO 操作？', en: 'How should MOVO approve actions?' },
   'code.permission.ask': { zh: '请求批准', en: 'Ask for approval' },
   'code.permission.askHint': { zh: '编辑项目外文件等越界操作需要你批准', en: 'Ask before actions outside the project file sandbox' },

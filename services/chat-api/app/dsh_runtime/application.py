@@ -190,6 +190,11 @@ class DshRuntimeApplication:
             raise RuntimeError("DSH Runtime Application is not started")
         return self.chat
 
+    def require_transport(self) -> HttpKernelHostTransport:
+        if self._transport is None:
+            raise RuntimeError("DSH Runtime Application is not started")
+        return self._transport
+
     def require_topic_admission(self) -> TopicAdmissionService:
         if self.topic_admission is None:
             raise RuntimeError("DSH Runtime Application is not started")

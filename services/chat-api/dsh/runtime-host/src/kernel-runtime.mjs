@@ -32,6 +32,7 @@ import { DshWorkspaceService } from './workspace-service.mjs'
 import { cancelSessionWork } from './session-cancellation.mjs'
 import { DesktopApprovalBroker } from './desktop-approval-broker.mjs'
 import { CodeApprovalReviewer } from './code-approval-reviewer.mjs'
+import { UserQuestionBroker } from './user-question-broker.mjs'
 import { codePermissionPolicy } from './code-permission-policy.mjs'
 import { registerAskaiSkillProvider } from './askai-skill-provider.mjs'
 import { invokeSelectedSkill, resolveSkillTurnContext } from './skill-turn-selection.mjs'
@@ -56,6 +57,7 @@ export class KernelRuntime {
   #sessionComposer
   #workspaces
   #desktopApprovals
+  #userQuestions
   #skillProviderDispose
   #skillProvider
   #skillResourceToolDispose
@@ -114,6 +116,7 @@ export class KernelRuntime {
       excludedTools: enterpriseToolNames(this.modelProfile),
       automaticReviewer: new CodeApprovalReviewer(this.#modelAdapter, this.modelProfile),
     })
+    this.#userQuestions = new UserQuestionBroker(ctx)
     if (this.modelProfile?.toolProfile !== undefined) {
       this.#toolBridge = new AskaiToolBridge(ctx, {
         ...this.modelProfile.toolProfile,
@@ -257,6 +260,16 @@ export class KernelRuntime {
     return this.#desktopApprovals.decide(sessionId, approvalId, outcome, grantScope)
   }
 
+  pendingQuestions(sessionId) {
+    this.#requireAgent(sessionId)
+    return this.#userQuestions.list(sessionId)
+  }
+
+  answerQuestion(sessionId, questionId, answers) {
+    this.#requireAgent(sessionId)
+    return this.#userQuestions.answer(sessionId, questionId, answers)
+  }
+
   events(sessionId, afterCursor) {
     this.#requireAgent(sessionId)
     return this.#journal.replay(sessionId, afterCursor)
@@ -328,6 +341,7 @@ export class KernelRuntime {
     this.#temporalContext.remove(sessionId)
     this.#turnContext.remove(sessionId)
     this.#desktopApprovals.clearSession(sessionId)
+    this.#userQuestions.clearSession(sessionId)
     await handle.agent.whenIdle()
     await handle.dispose()
     this.#liveAssistantStream.remove(sessionId)
@@ -374,6 +388,7 @@ export class KernelRuntime {
     }
     this.#modelAdapterDispose?.()
     this.#desktopApprovals?.dispose()
+    this.#userQuestions?.dispose()
     this.#toolBridge?.dispose()
     this.#webSearchDispose?.()
     this.#skillResourceToolDispose?.()
