@@ -16,7 +16,6 @@ on:
       - "services/chat-api/dsh/compatibility-matrix.yaml"
       - "services/chat-api/scripts/benchmark_dsh_gateway.py"
       - "services/chat-api/app/main.py"
-      - "docs/dsh-*"
       - "apps/user-web/**"
       - ".github/workflows/dsh-migration-step1.yml"
       - ".github/workflows/dsh-upgrade-candidate.yml"

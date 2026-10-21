@@ -13,11 +13,23 @@ BLOCKED_PARTS = (
     "apps/official-website/docs/.vitepress/cache/",
 )
 BLOCKED_PREFIXES = (
+    "docs/",
     "apps/desktop-electron/",
     "apps/local-browser-agent/",
     "apps/official-website/",
     "apps/crm/",
     "services/crm-service/",
+)
+BLOCKED_INTERNAL_DOCS = frozenset(
+    {
+        "services/admin-api/README.md",
+        "services/document-parser/README.md",
+        "services/chat-api/app/enterprise_capabilities/content/evaluation/README.md",
+        "services/chat-api/dsh/COMPATIBILITY.md",
+        "services/chat-api/tests/manual/graph_planning_test_cases.md",
+        "services/chat-api/tests/ppt_image_edit_poc/README.md",
+        "services/chat-api/tests/task_scenarios/README.md",
+    }
 )
 PRIVATE_DEPLOYMENT_PATTERNS = (
     (
@@ -105,6 +117,8 @@ def main() -> int:
         name = Path(relative).name
         if normalized.startswith(BLOCKED_PREFIXES):
             failures.append(f"blocked non-community source: {relative}")
+        if normalized in BLOCKED_INTERNAL_DOCS:
+            failures.append(f"blocked internal document: {relative}")
         if name.startswith(".env") and name != ".env.example":
             failures.append(f"tracked environment file: {relative}")
         if any(part in normalized for part in BLOCKED_PARTS):

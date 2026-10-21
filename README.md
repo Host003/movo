@@ -33,7 +33,7 @@ MOVO brings DSH Agents from development experiments into enterprise production. 
 <br>
 
 <p align="center">
-  <img src="docs/assets/dsh-movo-responsibilities-en.png" alt="How DeepSeek Harness and MOVO divide responsibilities" width="760">
+  <img src="assets/dsh-movo-responsibilities-en.png" alt="How DeepSeek Harness and MOVO divide responsibilities" width="760">
 </p>
 
 <br>
@@ -57,7 +57,7 @@ Then open:
 http://localhost:3000/admin/setup
 ```
 
-The launcher pulls the official prebuilt images, waits for the services to become healthy and prints the setup address. No `.env` file or local image build is required. Windows users should run MOVO inside an Ubuntu WSL 2 distribution; see the [Windows installation guide](docs/windows-installation.md).
+The launcher pulls the official prebuilt images, waits for the services to become healthy and prints the setup address. No `.env` file or local image build is required. Windows users should run MOVO inside an Ubuntu WSL 2 distribution; see the [online quick-start guide](https://www.himovo.com/en/guide/getting-started.html).
 
 > Got MOVO running? Please click **Star** in the upper-right corner. It helps more developers discover the project.
 
@@ -154,7 +154,7 @@ The default Docker Compose deployment starts 12 services: the gateway, two Web a
 
 The quick-start command above works on Linux and macOS. `./movo up` pulls the published MOVO and infrastructure images sequentially and keeps retrying network failures until the pull succeeds or the user presses `Ctrl+C`. The first startup downloads several container images and can take some time, especially when access to GHCR or Docker Hub is slow. Normal users do **not** need to build the images locally.
 
-On Windows, use Docker Desktop with WSL 2 and Ubuntu. Check that Ubuntu exists with `wsl -l -v`, then enter it explicitly with `wsl -d Ubuntu`; do not run MOVO from a prompt beginning with `docker-desktop:`. See the complete [Windows installation guide](docs/windows-installation.md).
+On Windows, use Docker Desktop with WSL 2 and Ubuntu. Check that Ubuntu exists with `wsl -l -v`, then enter it explicitly with `wsl -d Ubuntu`; do not run MOVO from a prompt beginning with `docker-desktop:`. See the [online setup steps](https://www.himovo.com/en/guide/getting-started.html#windows-enter-ubuntu-not-docker-desktop).
 
 You can also start the same official prebuilt images directly with `docker compose up -d`, including from Windows PowerShell or Command Prompt. Neither command requires an `.env` file, but native Compose pulls in parallel and does not provide the launcher's continuous retry loop or readiness wait. To build and start local images from source instead, use `./movo up --build`.
 
@@ -187,7 +187,7 @@ After setup:
 ./movo down -v    # Permanently delete MOVO data after confirmation
 ```
 
-For production, pin a release tag instead of using `latest`. See [Docker deployment](docs/docker-deployment.md) for image selection, upgrades, backup and restore, reverse proxy configuration and the production baseline.
+For production, pin a release tag instead of using `latest`, and back up data before upgrades. See the [online deployment guide](https://www.himovo.com/en/guide/getting-started.html) for setup details.
 
 ### Configuration
 
@@ -245,7 +245,6 @@ Issues and feature requests are welcome. Clear use cases and reproducible feedba
 - [Contribution guide](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
 - [Community support policy](SUPPORT.md)
-- [Maintainer release process](docs/release-process.md)
 - Security, commercial licensing and support: `support@himovo.com`
 
 Before submitting a change, run the relevant checks described in [CONTRIBUTING.md](CONTRIBUTING.md). At minimum, the repository hygiene check is:

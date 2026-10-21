@@ -35,7 +35,7 @@ MOVO 帮助企业将 DSH Agent 从开发验证推进到生产使用。它在 DSH
 <br>
 
 <p align="center">
-  <img src="docs/assets/dsh-movo-responsibilities-zh-cn.png" alt="DeepSeek Harness 与 MOVO 的职责分工" width="760">
+  <img src="assets/dsh-movo-responsibilities-zh-cn.png" alt="DeepSeek Harness 与 MOVO 的职责分工" width="760">
 </p>
 
 <br>
@@ -59,7 +59,7 @@ chmod +x movo
 http://localhost:3000/admin/setup
 ```
 
-启动器会拉取官方预构建镜像、等待服务健康并输出初始化地址，无需创建 `.env` 文件，也无需在本地构建镜像。Windows 用户应在 Ubuntu WSL 2 发行版中运行 MOVO，完整步骤见 [Windows 安装指南](docs/windows-installation.zh-CN.md)。
+启动器会拉取官方预构建镜像、等待服务健康并输出初始化地址，无需创建 `.env` 文件，也无需在本地构建镜像。Windows 用户应在 Ubuntu WSL 2 发行版中运行 MOVO，完整步骤见[官网快速开始](https://www.himovo.com/guide/getting-started.html)。
 
 > 已经成功运行 MOVO？欢迎点击页面右上角的 **Star**，让更多开发者发现这个项目。
 
@@ -156,7 +156,7 @@ flowchart LR
 
 上方快速启动命令适用于 Linux 和 macOS。`./movo up` 会串行拉取已发布的 MOVO 及基础镜像；遇到网络失败时会持续重试，直到拉取成功或用户按 `Ctrl+C` 停止。首次启动需要下载多个容器镜像，在 GHCR 或 Docker Hub 访问较慢时可能需要较长时间。普通用户**不需要在本地构建镜像**。
 
-Windows 用户推荐使用 Docker Desktop、WSL 2 与 Ubuntu。请先通过 `wsl -l -v` 确认已经安装 Ubuntu，再使用 `wsl -d Ubuntu` 进入；不要在提示符以 `docker-desktop:` 开头的内部发行版中执行 MOVO。完整步骤与常见问题见 [Windows 安装指南](docs/windows-installation.zh-CN.md)。
+Windows 用户推荐使用 Docker Desktop、WSL 2 与 Ubuntu。请先通过 `wsl -l -v` 确认已经安装 Ubuntu，再使用 `wsl -d Ubuntu` 进入；不要在提示符以 `docker-desktop:` 开头的内部发行版中执行 MOVO。完整步骤见[官网安装说明](https://www.himovo.com/guide/getting-started.html#windows-必须进入-ubuntu-而不是-docker-desktop)。
 
 也可以直接执行 `docker compose up -d` 启动同一套官方预构建镜像，包括在 Windows PowerShell 或命令提示符中使用。这两种方式默认都不需要 `.env` 文件；但原生 Compose 会并发拉取镜像，不包含启动器的持续重试与健康等待。如需从源码构建本地镜像并启动，请使用 `./movo up --build`。
 
@@ -189,7 +189,7 @@ http://localhost:3000/admin/setup
 ./movo down -v    # 确认后永久删除 MOVO 数据
 ```
 
-生产部署应固定版本标签，不要直接使用 `latest`。镜像选择、升级、备份恢复、反向代理和生产基线详见 [Docker 部署说明](docs/docker-deployment.md)。
+生产部署应固定版本标签，不要直接使用 `latest`，升级前先备份数据。部署步骤见[官网快速开始](https://www.himovo.com/guide/getting-started.html)。
 
 ### 配置
 
@@ -246,7 +246,6 @@ PUBLIC_BASE_URL=https://movo.example.com
 - [贡献指南](CONTRIBUTING.md)
 - [安全策略](SECURITY.md)
 - [社区支持策略](SUPPORT.md)
-- [维护者发布流程](docs/release-process.md)
 - 安全问题、商业授权与支持：`support@himovo.com`
 
 ### 加入 MOVO 咨询群
@@ -254,7 +253,7 @@ PUBLIC_BASE_URL=https://movo.example.com
 扫描下方企业微信活码加入咨询群，获取产品咨询与社区交流支持。
 
 <p align="center">
-  <img src="docs/assets/wecom-support-group-qr.png" alt="MOVO 企业微信咨询群二维码" width="240">
+  <img src="assets/wecom-support-group-qr.png" alt="MOVO 企业微信咨询群二维码" width="240">
 </p>
 
 提交改动前，请按 [CONTRIBUTING.md](CONTRIBUTING.md) 运行对应检查。至少应执行仓库开源卫生检查：
