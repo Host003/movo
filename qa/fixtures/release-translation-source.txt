@@ -1,9 +1,0 @@
-Release Acceptance Note
-
-1. The MOVO team generated an article for the release review.
-2. The reviewer must confirm that the downloadable document contains the final answer.
-
-Metric | Value
-Reviewed items | 73421
-
-Conclusion: Keep the headings, numbers, and product name in the Chinese translation.

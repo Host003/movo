@@ -22,8 +22,8 @@ npx playwright test --config release-smoke.config.ts
 
 也可以先在当前会话提供环境地址与专用测试账号，让 Codex 执行同一命令并报告结果。不要把密码提交到仓库或写进测试文件。
 
-测试退出码为 0 且 HTML 报告显示全部通过，表示基础自动化回归通过；完整用户端浏览器门禁还须通过验收清单，其中文章 Word、PDF 和文档翻译交付是必跑项。失败时检查 `qa/evidence/release-smoke/report/index.html` 及 `results/` 中的截图、视频和 trace；修复后在**同一候选提交及部署**重新跑。在 `qa` 目录执行 `npx playwright show-report evidence/release-smoke/report` 可查看报告。
+测试退出码为 0 且 HTML 报告显示全部通过，表示基础自动化回归通过；完整用户端浏览器门禁还须通过验收清单。失败时检查 `qa/evidence/release-smoke/report/index.html` 及 `results/` 中的截图、视频和 trace；修复后在**同一候选提交及部署**重新跑。在 `qa` 目录执行 `npx playwright show-report evidence/release-smoke/report` 可查看报告。
 
 ## 覆盖范围与边界
 
-覆盖登录、新建会话、多轮任务提交、请求成功、回答内容、刷新后会话持久化及重开。现有 `qa/session-sharing-realtime.spec.ts` 是需特定 QA 种子环境的会话分享专项，不包含在本套件里。停止、分享、工具、Skill、文件、文章 Word/PDF 下载及文档翻译按完整浏览器验收清单执行；下载卡片和下载文件内容必须实测，模型回答声称“已导出”不足以通过。发版流程中的跨架构部署、备份恢复和其他人工功能检查仍按原清单执行。
+覆盖登录、新建会话、多轮任务提交、请求成功、回答内容、刷新后会话持久化及重开。现有 `qa/session-sharing-realtime.spec.ts` 是需特定 QA 种子环境的会话分享专项，不包含在本套件里。停止、分享、工具、Skill、文件等场景按完整浏览器验收清单执行。发版流程中的跨架构部署、备份恢复和其他人工功能检查仍按原清单执行。
