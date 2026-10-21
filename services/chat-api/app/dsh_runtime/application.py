@@ -18,6 +18,7 @@ from app.dsh_runtime.tool_gateway.token import ToolGatewayTokenService
 from app.dsh_runtime.profile.catalog import MongoModelCatalog
 from app.dsh_runtime.profile.compiler import ModelProfileCompiler
 from app.dsh_runtime.profile.tools import MongoToolCatalog, ToolProfileCompiler
+from app.dsh_runtime.profile.search_availability import search_available
 from app.dsh_runtime.profile.skills import MongoSkillCatalog, SkillProfileCompiler
 from app.dsh_runtime.profile.plugins import MongoPluginCatalog
 from app.dsh_runtime.plugin_management.repository import PluginInstallationRepository
@@ -121,7 +122,7 @@ class DshRuntimeApplication:
         publisher = RuntimeProfilePublisher(
             ModelProfileCompiler(
                 MongoModelCatalog(),
-                ToolProfileCompiler(MongoToolCatalog(), internal_catalog, employee_policy),
+                ToolProfileCompiler(MongoToolCatalog(), internal_catalog, employee_policy, search_available),
                 SkillProfileCompiler(MongoSkillCatalog()),
                 get_product_extension().model_access_policy,
                 MongoPluginCatalog(),

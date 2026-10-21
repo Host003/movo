@@ -14,6 +14,7 @@ import { NativePluginRegistry } from './native-plugin-registry.mjs'
 import { ManagedPluginBridge } from './managed-plugin-bridge.mjs'
 import { AskaiToolBridge } from './askai-tool-bridge-plugin.mjs'
 import { AskaiWebSearchProvider } from './askai-web-search-provider.mjs'
+import { hasConfiguredWebSearch } from './web-search-availability.mjs'
 import { RuntimeTemporalContext } from './runtime-temporal-context.mjs'
 import { RuntimeTurnContext } from './runtime-turn-context.mjs'
 import { OfficialDshHostComposition } from './official-host/composition.mjs'
@@ -77,10 +78,17 @@ export class KernelRuntime {
     await mkdir(this.storageRoot, { recursive: true })
     this.#composition = new OfficialDshHostComposition({
       storageRoot: this.storageRoot,
-      webSearchProvider: this.modelProfile?.toolProfile === undefined ? undefined : 'askai-enterprise',
+      webSearchProvider: hasConfiguredWebSearch(this.modelProfile) ? 'askai-enterprise' : undefined,
       plugins: this.modelProfile?.plugins,
     })
     const ctx = await this.#composition.start()
+    if (this.#composition.unavailablePlugins.length > 0) {
+      console.warn('MOVO Runtime omitted incompatible DSH plugins:', this.#composition.unavailablePlugins)
+      this.modelProfile = Object.freeze({
+        ...this.modelProfile,
+        plugins: this.#composition.availablePlugins,
+      })
+    }
     this.#ctx = ctx
     this.#managedPlugins = new ManagedPluginBridge(ctx)
     this.#temporalContext.install(ctx)
@@ -100,7 +108,7 @@ export class KernelRuntime {
           provider: skillProviderRegistration.provider,
           invocations: this.#skillInvocations,
         })
-    if (this.modelProfile?.toolProfile !== undefined) {
+    if (hasConfiguredWebSearch(this.modelProfile)) {
       this.#webSearchProvider = new AskaiWebSearchProvider(ctx, {
         ...this.modelProfile.toolProfile,
         profileVersion: this.profileVersion,
