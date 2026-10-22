@@ -1,0 +1,30 @@
+/* Content generated with inline styles needs explicit dark overrides. */
+html.dark .markdown-body code[style] {
+  background: #26364a !important;
+  border-color: #354359 !important;
+  color: #ff9ba8 !important;
+}
+
+html.dark .markdown-body th[style] {
+  background: #26364a !important;
+}
+
+html.dark .regenerate-button {
+  --n-color: #26364a !important;
+  --n-color-hover: #30435b !important;
+  --n-color-pressed: #1e2b3d !important;
+  --n-color-focus: #26364a !important;
+  --n-border: 1px solid #354359 !important;
+  --n-border-hover: 1px solid #6b8fd0 !important;
+  --n-border-pressed: 1px solid #526da0 !important;
+  --n-border-focus: 1px solid #6b8fd0 !important;
+  --n-text-color: #9ab9ff !important;
+  --n-text-color-hover: #c2d4ff !important;
+  --n-text-color-pressed: #9ab9ff !important;
+  --n-text-color-focus: #c2d4ff !important;
+}
+
+html.dark .markdown-body td[style],
+html.dark .markdown-body th[style] {
+  border-color: #354359 !important;
+}

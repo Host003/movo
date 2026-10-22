@@ -126,7 +126,7 @@
                         <div class="node-head-row">
                           <div class="node-title-fields">
                             <div class="node-type-row">
-                              <div class="node-type-pill" :style="{ color: workflowTypeMeta(step.type).color }">
+                              <div class="node-type-pill" :style="{ color: workflowAccent(workflowTypeMeta(step.type).color, activeTheme === 'dark') }">
                                 <span class="node-type-icon" :style="{ '--icon-url': `url(${workflowTypeMeta(step.type).icon})` }"></span>
                                 <n-select
                                   :value="step.type"
@@ -296,7 +296,7 @@
                         <details
                           v-if="workflowTypeMeta(step.type).usageDescription"
                           class="node-usage-guide"
-                          :style="{ '--guide-color': workflowTypeMeta(step.type).color }"
+                          :style="{ '--guide-color': workflowAccent(workflowTypeMeta(step.type).color, activeTheme === 'dark') }"
                           @click.stop
                         >
                           <summary>
@@ -379,10 +379,10 @@
                       <button
                         class="quick-node-button"
                         type="button"
-                        :style="{ color: item.color, background: item.bg, borderColor: item.bg }"
+                        :style="workflowButtonColors(item.color, item.bg, activeTheme === 'dark')"
                         @click="appendNodeByType(item.type)"
                       >
-                        <span class="quick-node-icon" :style="{ '--icon-url': `url(${item.icon})`, color: item.color }"></span>
+                        <span class="quick-node-icon" :style="{ '--icon-url': `url(${item.icon})`, color: workflowAccent(item.color, activeTheme === 'dark') }"></span>
                         <span>{{ item.label }}</span>
                       </button>
                     </template>
@@ -413,7 +413,7 @@
                 <div class="result-title">{{ t('执行预览') }}</div>
                 <div v-if="workflowPreviewNodes.length" class="flow-preview">
                   <template v-for="(node, index) in workflowPreviewNodes" :key="node.id">
-                    <div class="flow-node" :style="{ color: node.color }">
+                    <div class="flow-node" :style="{ color: workflowAccent(node.color, activeTheme === 'dark') }">
                       <span class="flow-node-icon" :style="{ '--icon-url': `url(${node.icon})` }"></span>
                       <span>{{ node.label }}</span>
                     </div>
@@ -801,6 +801,8 @@ import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, onUpd
 import { useRoute, useRouter } from 'vue-router';
 import { useMessage } from 'naive-ui';
 import { t, useLocale } from '@/composables/i18n';
+import { useTheme } from '@/composables/theme';
+import { workflowAccent, workflowButtonColors } from '@/theme/workflow-colors';
 import { formatAdminDateTime } from '@/composables/adminTimezone';
 import {
   checkScriptPlugin,
@@ -844,6 +846,7 @@ import SkillPublishDialog from './SkillPublishDialog.vue';
 import { missingWorkflowSelection } from './workflowRequiredSelections';
 
 const PythonCodeEditor = defineAsyncComponent(() => import('@/components/PythonCodeEditor.vue'));
+const { activeTheme } = useTheme();
 
 interface WorkflowStep {
   id: string;

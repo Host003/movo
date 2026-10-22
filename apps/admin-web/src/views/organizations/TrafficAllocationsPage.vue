@@ -280,23 +280,16 @@ const columns: DataTableColumns<UserAllocationItem> = [
     key: 'name',
     render(row) {
       return h('div', { class: 'user-cell' }, [
-        h('div', { class: 'user-main-line', style: 'display:flex;align-items:center;gap:8px;min-width:0;' }, [
-          h(
-            'strong',
-            {
-              style: 'color:#0f172a;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;',
-            },
-            row.name || row.loginName || '-',
-          ),
+        h('div', { class: 'user-main-line' }, [
+          h('strong', row.name || row.loginName || '-'),
           row.loginName && row.loginName !== row.name
-            ? h('span', { class: 'login-name', style: 'flex:0 0 auto;color:#a3adbd;font-size:14px;' }, row.loginName)
+            ? h('span', { class: 'login-name' }, row.loginName)
             : null,
         ]),
         h(
           'div',
           {
             class: 'user-contact-line',
-            style: 'color:#8b97a8;font-size:14px;line-height:20px;word-break:break-all;',
           },
           userContactText(row),
         ),
@@ -304,8 +297,6 @@ const columns: DataTableColumns<UserAllocationItem> = [
           'span',
           {
             class: 'user-department',
-            style:
-              'width:fit-content;max-width:100%;border-radius:4px;background:#f6f8fb;color:#8b97a8;font-size:14px;line-height:22px;padding:0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;',
           },
           row.departmentName || t('未分配部门'),
         ),
@@ -628,6 +619,10 @@ onMounted(async () => {
   flex-wrap: wrap;
   gap: 4px 10px;
   min-width: 0;
+  color: #8b97a8;
+  font-size: 14px;
+  line-height: 20px;
+  word-break: break-all;
 }
 
 .user-contact-item {

@@ -24,7 +24,7 @@
         style="margin-bottom: 16px;"
       >
         {{ t('当前企业本周期总额度为 0，所有模型将无法被调用。请先前往') }}
-        <router-link to="/organizations/traffic?open=quota" class="alert-link" style="color: #2563eb; font-weight: 600; text-decoration: underline;">
+        <router-link to="/organizations/traffic?open=quota" class="alert-link">
           {{ t('流量分配') }}
         </router-link>
         {{ t('配置企业总额度与成员额度。') }}
@@ -854,6 +854,11 @@ onMounted(reload);
 </script>
 
 <style scoped>
+.alert-link {
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: underline;
+}
 .model-page {
   height: calc(100vh - 92px);
   min-height: 0;

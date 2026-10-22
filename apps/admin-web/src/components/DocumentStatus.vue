@@ -3,7 +3,7 @@
     v-if="state.retryable"
     type="button"
     class="doc-status-wrapper doc-status-button"
-    :style="{ color: state.color }"
+    :style="{ color: displayColor }"
     :title="t('点击重新学习')"
     @click.stop="emit('retry')"
   >
@@ -13,7 +13,7 @@
       <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 0-15.3-6.4" /><path d="M3 3v5h5" /><path d="M3 12a9 9 0 0 0 15.3 6.4" /><path d="M21 21v-5h-5" /></svg>
     </span>
   </button>
-  <div v-else class="doc-status-wrapper" :style="{ color: state.color }">
+  <div v-else class="doc-status-wrapper" :style="{ color: displayColor }">
     <!-- SVG 图标 -->
     <span class="status-icon-box" v-html="state.icon"></span>
     <!-- 状态文本 -->
@@ -24,6 +24,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { t } from '@/composables/i18n';
+import { useTheme } from '@/composables/theme';
 import type { KnowledgeDocumentItem } from '@/api/knowledge-documents';
 
 const props = defineProps<{
@@ -33,6 +34,16 @@ const props = defineProps<{
 const emit = defineEmits<{
   retry: [];
 }>();
+
+const { activeTheme } = useTheme();
+const displayColor = computed(() => {
+  if (activeTheme.value !== 'dark') return state.value.color;
+  const color = state.value.color.toLowerCase();
+  if (color === '#d32f2f' || color === '#ff4d4f') return '#ff9ba8';
+  if (color === '#52c41a') return '#75d6ae';
+  if (color === '#2f80ed' || color === '#1890ff') return '#9ab9ff';
+  return '#aebdd1';
+});
 
 const state = computed(() => {
   const row = props.row;

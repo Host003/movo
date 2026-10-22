@@ -51,6 +51,13 @@ html.dark .app-shell {
   background: #0f1117;
 }
 
+html.dark .n-button.n-button--primary-type {
+  --n-text-color: #fff !important;
+  --n-text-color-hover: #fff !important;
+  --n-text-color-pressed: #fff !important;
+  --n-text-color-focus: #fff !important;
+}
+
 .page-stack {
   display: flex;
   flex-direction: column;

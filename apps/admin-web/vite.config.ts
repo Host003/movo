@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import path from 'node:path';
+import { adminDarkStyles } from './theme/dark-style-plugin.mjs';
 
 const productExtensionPath = process.env.MOVO_ADMIN_PRODUCT_UI_EXTENSION
   ? path.resolve(process.env.MOVO_ADMIN_PRODUCT_UI_EXTENSION)
@@ -11,6 +12,7 @@ export default defineConfig(({ command }) => ({
   // Keep the build safe even when a Docker/build environment omits the variable.
   base: process.env.VITE_BASE_PATH || (command === 'build' ? '/admin/' : '/'),
   plugins: [vue()],
+  css: { postcss: { plugins: [adminDarkStyles()] } },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
