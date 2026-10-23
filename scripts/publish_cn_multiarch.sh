@@ -51,8 +51,7 @@ for entry in "${infra[@]}"; do
   amd="${image}:amd64-${version}"
   if ! docker buildx imagetools inspect "${amd}" >/dev/null 2>&1; then
     printf '[cn-multiarch] Preserve amd64 %s\n' "${image}:${version}"
-    docker buildx imagetools create --platform linux/amd64 \
-      --tag "${amd}" "${image}:${version}"
+    docker buildx imagetools create --tag "${amd}" "${image}:${version}"
   fi
   require_platform "${amd}" amd64
 done
