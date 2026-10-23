@@ -61,7 +61,7 @@ http://localhost:3000/admin/setup
 
 启动器会拉取官方预构建镜像、等待服务健康并输出初始化地址，无需创建 `.env` 文件，也无需在本地构建镜像。Windows 用户应在 Ubuntu WSL 2 发行版中运行 MOVO，完整步骤见[官网快速开始](https://www.himovo.com/guide/getting-started.html)。
 
-`--mirror cn` 会从北京 ACR 公共镜像仓库拉取 MOVO、MongoDB、Redis、Weaviate 和 Alpine 镜像；升级时同样执行 `./movo --lang zh-CN --mirror cn update`。不带 `--mirror cn` 的 `./movo up` 仍使用 GHCR 和 Docker Hub。镜像源由命令明确指定，不根据语言或 IP 自动猜测，也不需要修改 `.env`。国内镜像目前提供 Linux/amd64；其他架构请使用默认镜像源。从源码构建仍使用 `./movo up --build`，不要与 `--mirror cn` 合用。
+`--mirror cn` 会从北京 ACR 公共镜像仓库拉取 MOVO、MongoDB、Redis、Weaviate 和 Alpine 镜像；升级时同样执行 `./movo --lang zh-CN --mirror cn update`。不带 `--mirror cn` 的 `./movo up` 仍使用 GHCR 和 Docker Hub。镜像源由命令明确指定，不根据语言或 IP 自动猜测，也不需要修改 `.env`。国内镜像支持 Linux/amd64 和 Linux/arm64，Docker 会按主机架构自动选择镜像。从源码构建仍使用 `./movo up --build`，不要与 `--mirror cn` 合用。
 
 如果 `.env` 中固定了 `MOVO_VERSION`，所选仓库也必须有相同标签。国内仓库初期提供 `latest` 和不可变的 `candidate-<提交 SHA>` 标签，不保证已有 GHCR 发布版本标签都存在。现有部署切换镜像源前请先备份数据。
 
