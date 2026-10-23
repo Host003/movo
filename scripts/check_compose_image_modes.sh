@@ -38,6 +38,7 @@ done
 
 china_prefix="registry.cn-beijing.aliyuncs.com/himovo-cn/movo"
 china_images="$(
+  env -u MOVO_VERSION -u MOVO_DOCUMENT_API_IMAGE -u MOVO_DOCUMENT_WORKER_IMAGE \
   MOVO_IMAGE_PREFIX="${china_prefix}" \
   MOVO_MONGO_IMAGE="${china_prefix}-mongo:6.0.20" \
   MOVO_REDIS_IMAGE="${china_prefix}-redis:7.4.2-alpine" \
@@ -54,7 +55,8 @@ for image in "${china_prefix}-mongo:6.0.20" "${china_prefix}-redis:7.4.2-alpine"
 done
 
 source_images="$(
-  MOVO_IMAGE_PREFIX=movo MOVO_VERSION=latest docker compose --env-file /dev/null \
+  env -u MOVO_DOCUMENT_API_IMAGE -u MOVO_DOCUMENT_WORKER_IMAGE \
+    MOVO_IMAGE_PREFIX=movo MOVO_VERSION=latest docker compose --env-file /dev/null \
     -f docker-compose.yml -f docker-compose.build.yml config --images
 )"
 for suffix in "${image_suffixes[@]}"; do
