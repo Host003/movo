@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from typing import Any
+from app.services.chunk_identifiers import extract_identifiers
 
 
 TEXT_LIKE_TYPES = {
@@ -72,6 +73,8 @@ def build_rag_chunks(raw_chunks: list[dict[str, Any]], options: RagChunkOptions 
         pending.append(raw)
 
     flush_pending()
+    for chunk in output:
+        chunk["searchIdentifiers"] = extract_identifiers(str(chunk.get("text") or ""))
     return output
 
 

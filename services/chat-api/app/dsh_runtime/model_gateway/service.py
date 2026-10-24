@@ -19,6 +19,7 @@ from app.llm.types import Message, Role
 from .message_compat import normalize_tool_history
 from .token import ModelGatewayClaims
 from .tool_schema import to_openai_chat_tools
+from .tool_query_scope import scope_knowledge_tool_arguments
 from .tool_visibility import visible_tools
 
 
@@ -70,7 +71,8 @@ class ModelGatewayService:
             if request.maxTokens:
                 kwargs["max_tokens"] = request.maxTokens
             tools = await visible_tools(
-                request.tools, session_id=request.sessionId or "", tenant_id=claims.tenant_id
+                request.tools, session_id=request.sessionId or "", tenant_id=claims.tenant_id,
+                messages=request.messages,
             )
             if tools:
                 kwargs["tools"] = to_openai_chat_tools(tools)
@@ -117,7 +119,8 @@ class ModelGatewayService:
         if request.maxTokens:
             kwargs["max_tokens"] = request.maxTokens
         tools = await visible_tools(
-            request.tools, session_id=request.sessionId or "", tenant_id=claims.tenant_id
+            request.tools, session_id=request.sessionId or "", tenant_id=claims.tenant_id,
+            messages=request.messages,
         )
         if tools:
             kwargs["tools"] = to_openai_chat_tools(tools)
@@ -148,6 +151,9 @@ class ModelGatewayService:
                 for index in sorted(tool_calls):
                     call = tool_calls[index]
                     if call["id"] and call["name"]:
+                        call["arguments"] = scope_knowledge_tool_arguments(
+                            name=call["name"], arguments=call["arguments"], messages=request.messages,
+                        )
                         yield {"type": "tool-call", **call}
                 if usage:
                     yield {"type": "usage", "usage": usage}

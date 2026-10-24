@@ -17,6 +17,7 @@ from app.integrations.storage import get_storage_adapter
 from app.repositories.job_repository import mark_job_succeeded, update_job_progress
 from app.services.pdf_ocr_policy import PdfOcrPolicy, inspect_pdf_ocr_policy
 from app.services.rag_chunk_optimizer import RagChunkOptions, build_rag_chunks
+from app.services.chunk_identifiers import extract_identifiers
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,7 @@ DOCX_EXTENSIONS = {"docx"}
 PDF_EXTENSIONS = {"pdf"}
 LEGACY_OFFICE_EXTENSIONS = {"doc", "ppt", "xls"}
 IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+SPREADSHEET_EXTENSIONS = {"xlsx", "xlsm"}
 
 
 @dataclass
@@ -59,6 +61,8 @@ def run_document_parse(job_id: str, request: ParseDocumentJobRequest) -> None:
             raw_chunks,
             _rag_chunk_options(request.minChunkSize, request.chunkSize, request.chunkOverlap),
         )
+        for chunk in rag_chunks:
+            chunk["searchIdentifiers"] = extract_identifiers(str(chunk.get("text") or ""))
         update_job_progress(job_id, 75)
 
         markdown_key = f"{artifact_prefix}/parsed.md"
@@ -82,6 +86,7 @@ def run_document_parse(job_id: str, request: ParseDocumentJobRequest) -> None:
         "ragChunkCount": len(rag_chunks),
         "chunksKey": chunks_key,
         "chunkCount": len(rag_chunks),
+        "parseQuality": parsed.raw.get("movoParseQuality") or {},
     }
     update_job_progress(job_id, 90)
     post_callback(
@@ -106,6 +111,10 @@ def parse_document(path: Path, filename: str) -> ParsedDocument:
         filename = f"{Path(filename).stem}{converted_path.suffix}"
     if ext in IMAGE_EXTENSIONS:
         return parse_image_with_ocr(path, ext)
+    if ext in SPREADSHEET_EXTENSIONS:
+        from app.services.spreadsheet_ingest import parse_spreadsheet
+
+        return parse_spreadsheet(path)
 
     try:
         from docling.document_converter import DocumentConverter  # type: ignore
@@ -116,9 +125,12 @@ def parse_document(path: Path, filename: str) -> ParsedDocument:
         converter = _build_docling_converter(ext, pdf_ocr_policy=pdf_ocr_policy)
         try:
             result = converter.convert(str(path))
-        except Exception:
+        except Exception as exc:
             if ext in TEXT_EXTENSIONS:
                 return parse_plain_text(path, ext)
+            if ext == "pdf" and "artifacts_path" in str(exc):
+                logger.warning("Docling models unavailable; using native PDF text fallback")
+                return parse_with_fallback(path, ext)
             raise
         document = result.document
         markdown = document.export_to_markdown()
@@ -128,6 +140,12 @@ def parse_document(path: Path, filename: str) -> ParsedDocument:
             raw = {"parser": "docling", "markdown": markdown}
         image_ocr_pages = set(pdf_ocr_policy.image_ocr_pages) if pdf_ocr_policy else set()
         raw_chunks = chunk_docling_document(document, image_ocr_pages=image_ocr_pages)
+        if ext == "pdf":
+            from app.services.pdf_text_recovery import supplement_pdf_chunks
+
+            raw_chunks, quality = supplement_pdf_chunks(path, raw_chunks)
+            raw["movoParseQuality"] = quality
+            markdown = "\n\n".join([markdown, *[item["text"] for item in raw_chunks if item.get("metadata", {}).get("sourceKind") == "native_text_recovery"]]).strip()
         return ParsedDocument(markdown=markdown, raw=raw, raw_chunks=raw_chunks)
 
 

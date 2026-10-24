@@ -9,6 +9,7 @@ from app.services.embedding_provider import embed_query
 from app.services.reranker_provider import rerank
 from app.services.retrieval_access_policy import knowledge_retrieval_access_policy
 from app.services.vector_store import get_vector_store
+from app.services.exact_identifier_retrieval import exact_identifier_candidates
 
 SETTINGS_COLLECTION = "knowledge_document_settings"
 
@@ -42,6 +43,12 @@ def search_knowledge(request: RetrievalSearchRequest) -> dict[str, Any]:
         rerank_config["enabled"] = True
         config["retrieval"] = {**retrieval, "rerank": rerank_config}
         candidates = rerank(request.query, candidates, config)
+    exact = exact_identifier_candidates(
+        request.query, main_id=request.mainId, user_id=request.userId,
+        knowledge_base_id=request.knowledgeBaseId,
+    )
+    seen = {(item.get("documentId"), item.get("chunkId")) for item in exact}
+    candidates = exact + [item for item in candidates if (item.get("documentId"), item.get("chunkId")) not in seen]
     return {
         "query": request.query,
         "retrievalMode": mode,

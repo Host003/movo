@@ -14,6 +14,7 @@ from app.dsh_runtime.events.authoritative_delivery import (
     AuthoritativeDeliveryGuard,
     DeliveryStore,
 )
+from app.dsh_runtime.events.knowledge_final_guard import KnowledgeFinalGuard
 from app.dsh_runtime.events.tool_presentation import tool_presentations
 from app.dsh_runtime.gateway import DshAgentKernelGateway
 from app.dsh_runtime.profile.service import RuntimeProfilePublisher
@@ -60,11 +61,14 @@ class TurnTerminalRecovery:
             user_id=str(binding["user_id"]),
             message_id=message_id,
         )
+        question = str(((binding.get("active_turn") or {}).get("turn_context") or {}).get("user_request") or "")
+        knowledge_guard = KnowledgeFinalGuard(question)
         for event in native_events:
             projected = self._events.project(
                 event, message_id=message_id, tool_presentations=tool_ui
             )
             projected = await delivery_guard.apply(event, projected)
+            projected = knowledge_guard.apply(event, projected)
             writes.append(KernelEventWrite(event=event, projected=projected))
         if writes:
             await self._events.persist_batch(

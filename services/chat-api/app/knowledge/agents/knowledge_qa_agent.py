@@ -5,7 +5,10 @@ import re
 from app.knowledge.api.schemas import KnowledgeChunk, KnowledgeQARequest, KnowledgeQAResult
 from app.knowledge.citations.citation_resolver import parse_llm_json, resolve_citations
 from app.knowledge.prompting.knowledge_qa_prompt import build_knowledge_qa_messages
+from app.knowledge.agents.answer_evidence_guard import guard_absence_claim
+from app.knowledge.agents.answer_fact_guard import guard_numeric_claims
 from app.knowledge.retrieval.retrieval_client import knowledge_retrieval_client
+from app.knowledge.retrieval.named_document import resolve_named_document
 from app.services.llm import LLMService
 
 
@@ -87,6 +90,11 @@ class KnowledgeQAAgent:
         if not used_chunk_ids:
             used_chunk_ids = _extract_used_chunk_ids(raw)
         citations = resolve_citations(chunks, used_chunk_ids)
+        answer = guard_absence_claim(answer, [item.text for item in citations])
+        answer = guard_numeric_claims(answer, [
+            "\n".join([item.text, str((item.metadata or {}).get("document_title") or "")])
+            for item in citations
+        ])
         return KnowledgeQAResult(
             answer=answer,
             citations=citations,
@@ -96,6 +104,19 @@ class KnowledgeQAAgent:
         )
 
     async def answer(self, request: KnowledgeQARequest) -> KnowledgeQAResult:
+        named = await resolve_named_document(request)
+        if named is not None:
+            if named.status != "ready":
+                messages = {
+                    "not_found": f"未找到当前用户可访问的指定知识文档《{named.filename}》。",
+                    "ambiguous": f"存在多份同名知识文档《{named.filename}》，请指定目录或知识库。",
+                    "parse_failed": f"指定知识文档《{named.filename}》已上传，但解析失败，当前无法据此回答。请在管理后台检查并重新学习。",
+                    "index_failed": f"指定知识文档《{named.filename}》已解析，但学习索引失败，当前无法据此回答。请在管理后台检查并重新学习。",
+                    "not_ready": f"指定知识文档《{named.filename}》尚未学习完成，当前无法据此回答。",
+                    "empty": f"指定知识文档《{named.filename}》没有可用的知识片段，当前无法据此回答。",
+                }
+                return KnowledgeQAResult(answer=messages[named.status], document_status=named.status)
+            return await self.answer_from_chunks(request, list(named.chunks))
         chunks = await self.retrieve_chunks(request)
         return await self.answer_from_chunks(request, chunks)
 
