@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import re
 from collections import Counter
 from pathlib import Path
@@ -12,6 +13,7 @@ MIN_NATIVE_CHARS = 80
 MIN_COVERAGE = 0.65
 MIN_MISSING_CHARS = 16
 _CRITICAL_VALUE = re.compile(r"\d+(?:\.\d+)?\s*%|[A-Za-z]{1,8}\d{4,}")
+logger = logging.getLogger(__name__)
 
 
 def supplement_pdf_chunks(path: Path, chunks: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
@@ -28,15 +30,33 @@ def supplement_pdf_chunks(path: Path, chunks: list[dict[str, Any]]) -> tuple[lis
         page_chunks = [item for item in chunks if item.get("pageNo") == page_no]
         parsed_text = "\n".join(str(item.get("text") or "") for item in page_chunks)
         coverage = _coverage(native_chars, _characters(parsed_text))
-        missing_lines = _missing_lines(native_text, parsed_text) if len(native_chars) >= MIN_NATIVE_CHARS else []
+        native_missing = _missing_lines(native_text, parsed_text) if len(native_chars) >= MIN_NATIVE_CHARS or not page_chunks else []
+        ocr_missing: list[str] = []
+        ocr_attempted = False
+        ocr_failed = False
+        try:
+            has_images = bool(page.images) if not page_chunks and len(native_chars) < MIN_NATIVE_CHARS else False
+        except Exception:
+            has_images = False
+        if has_images:
+            ocr_attempted = True
+            try:
+                from app.services.pdf_page_ocr import extract_page_ocr_text
+
+                ocr_text = extract_page_ocr_text(path, page_no)
+                ocr_missing = _missing_lines(ocr_text, "\n".join([native_text, parsed_text]))
+            except Exception:
+                ocr_failed = True
+                logger.exception("PDF page OCR failed for page %s", page_no)
+        missing_lines = list(dict.fromkeys([*native_missing, *ocr_missing]))
         missing_chars = sum(_characters(line).total() for line in missing_lines)
         recovered = bool(missing_lines) and (
-            coverage < MIN_COVERAGE or missing_chars >= MIN_MISSING_CHARS
+            not page_chunks or coverage < MIN_COVERAGE or missing_chars >= MIN_MISSING_CHARS
             or any(_CRITICAL_VALUE.search(line) for line in missing_lines)
         )
+        recovery_text = "\n".join(missing_lines) if recovered else ""
         if recovered:
             ordinal = len(chunks)
-            recovery_text = "\n".join(missing_lines)
             chunks.append({
                 "chunkId": f"raw_{ordinal + 1:06d}", "ordinal": ordinal,
                 "text": recovery_text, "contextualText": recovery_text,
@@ -47,9 +67,13 @@ def supplement_pdf_chunks(path: Path, chunks: list[dict[str, Any]]) -> tuple[lis
         report.append({
             "pageNo": page_no, "nativeChars": len(native_chars),
             "parsedChars": len(_characters(parsed_text)),
-            "nativeCoverage": round(coverage, 3), "nativeTextRecovered": recovered,
+            "nativeCoverage": round(coverage, 3),
+            "finalNativeCoverage": round(_coverage(native_chars, _characters("\n".join([parsed_text, recovery_text]))), 3),
+            "nativeTextRecovered": recovered and bool(native_missing),
+            "ocrTextRecovered": recovered and bool(ocr_missing),
             "missingNativeChars": missing_chars,
-            "needsReview": len(native_chars) < MIN_NATIVE_CHARS and not page_chunks,
+            "ocrAttempted": ocr_attempted, "ocrFailed": ocr_failed,
+            "needsReview": (not page_chunks and not recovered) or ocr_failed,
         })
     return chunks, {
         "pageCount": len(pages), "pages": report,

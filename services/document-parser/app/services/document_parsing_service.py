@@ -145,6 +145,8 @@ def parse_document(path: Path, filename: str) -> ParsedDocument:
 
             raw_chunks, quality = supplement_pdf_chunks(path, raw_chunks)
             raw["movoParseQuality"] = quality
+            if quality.get("reviewPages"):
+                logger.warning("PDF pages remain unreadable after recovery: %s", quality["reviewPages"])
             markdown = "\n\n".join([markdown, *[item["text"] for item in raw_chunks if item.get("metadata", {}).get("sourceKind") == "native_text_recovery"]]).strip()
         return ParsedDocument(markdown=markdown, raw=raw, raw_chunks=raw_chunks)
 

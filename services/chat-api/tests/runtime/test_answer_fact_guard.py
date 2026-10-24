@@ -20,3 +20,16 @@ def test_unsupported_quantity_unit_is_removed_generically():
 
 def test_unit_must_belong_to_same_cited_number():
     assert guard_numeric_claims("收入 17017 元。", ["收入 17017；另有支出 300 元"]) == "收入 17017。"
+
+
+def test_equivalent_unicode_number_forms_share_evidence_without_rewriting_answer():
+    source = "デフォルトは25％、最小は10％、最大は30％。"
+    answer = "默认 25%，最小 10%，最大 30%。"
+    assert guard_numeric_claims(answer, [source]) == answer
+    assert guard_numeric_claims("增长 １，０００．５％。", ["增长 1,000.5%。"]) == "增长 １，０００．５％。"
+
+
+def test_unicode_normalization_does_not_approve_different_values():
+    assert guard_numeric_claims("默认 35%。", ["デフォルトは25％。"] ) == INSUFFICIENT
+    assert guard_numeric_claims("下降 −25%。", ["增长 25%。"] ) == INSUFFICIENT
+    assert guard_numeric_claims("下降 -25%。", ["下降 −25％。"] ) == "下降 -25%。"

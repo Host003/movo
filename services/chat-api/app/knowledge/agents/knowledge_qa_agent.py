@@ -6,7 +6,8 @@ from app.knowledge.api.schemas import KnowledgeChunk, KnowledgeQARequest, Knowle
 from app.knowledge.citations.citation_resolver import parse_llm_json, resolve_citations
 from app.knowledge.prompting.knowledge_qa_prompt import build_knowledge_qa_messages
 from app.knowledge.agents.answer_evidence_guard import guard_absence_claim
-from app.knowledge.agents.answer_fact_guard import guard_numeric_claims
+from app.knowledge.agents.answer_fact_guard import INSUFFICIENT, guard_numeric_claims
+from app.knowledge.agents.answer_support_guard import guard_supported_answer
 from app.knowledge.retrieval.retrieval_client import knowledge_retrieval_client
 from app.knowledge.retrieval.named_document import resolve_named_document
 from app.services.llm import LLMService
@@ -90,7 +91,17 @@ class KnowledgeQAAgent:
         if not used_chunk_ids:
             used_chunk_ids = _extract_used_chunk_ids(raw)
         citations = resolve_citations(chunks, used_chunk_ids)
-        answer = guard_absence_claim(answer, [item.text for item in citations])
+        if not citations:
+            answer = INSUFFICIENT
+        else:
+            answer = guard_absence_claim(answer, [item.text for item in citations])
+        if citations and answer not in {
+            "内部知识库中未找到足够依据。",
+            "当前已检索片段不足以确认，不能据此判断原文不存在该信息。",
+        }:
+            answer = guard_supported_answer(
+                answer, [item.text for item in citations], parsed.get("supportChecks"),
+            )
         answer = guard_numeric_claims(answer, [
             "\n".join([item.text, str((item.metadata or {}).get("document_title") or "")])
             for item in citations

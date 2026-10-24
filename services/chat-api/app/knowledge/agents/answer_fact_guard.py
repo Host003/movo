@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from decimal import Decimal, InvalidOperation
 
 
-_NUMBER = re.compile(r"(?<![A-Za-z0-9])\d[\d,]*(?:\.\d+)?%?(?![A-Za-z0-9])")
+_NUMBER = re.compile(r"(?<![A-Za-z0-9])[-−]?\d[\d,，]*(?:[.．]\d+)?[%％]?(?![A-Za-z0-9])")
 _QUANTITY_UNIT = re.compile(
-    r"(?P<number>\d[\d,]*(?:\.\d+)?)\s*(?P<unit>个工作日|工作日|万元|千元|公里|毫米|小时|分钟|个月|元|天|月|年|台|人|次|套|件)"
+    r"(?P<number>[-−]?\d[\d,，]*(?:[.．]\d+)?)\s*(?P<unit>个工作日|工作日|万元|千元|公里|毫米|小时|分钟|个月|元|天|月|年|台|人|次|套|件)"
 )
 INSUFFICIENT = "内部知识库中未找到足够依据。"
 
@@ -44,7 +45,8 @@ def _has_cited_quantity(source: str, raw_number: str, unit: str) -> bool:
 
 def _numeric_value(raw: str) -> tuple[Decimal, bool] | None:
     try:
-        return Decimal(raw.rstrip("%").replace(",", "")), raw.endswith("%")
+        normalized = unicodedata.normalize("NFKC", raw).replace("−", "-")
+        return Decimal(normalized.rstrip("%").replace(",", "")), normalized.endswith("%")
     except InvalidOperation:
         return None
 

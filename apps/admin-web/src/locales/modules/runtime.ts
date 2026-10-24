@@ -127,8 +127,6 @@ export const runtimeMessages: Record<string, LabelMap> = {
   'legacy.segmentation_status': { 'zh-CN': '分段状态', 'en-US': 'Segmentation Status' },
   'legacy.segment_count': { 'zh-CN': '分段数量', 'en-US': 'Segment Count' },
   'legacy.learning_complete': { 'zh-CN': '学习完成', 'en-US': 'Learning Complete' },
-  'legacy.learning_review': { 'zh-CN': '内容可能缺失', 'en-US': 'Content May Be Missing' },
-  'legacy.learning_review_pages': { 'zh-CN': '解析内容可能缺失，请复核第 {pages} 页', 'en-US': 'Parsed content may be missing; review page(s) {pages}' },
   'legacy.learning': { 'zh-CN': '学习中', 'en-US': 'Learning' },
   'legacy.learning_failed': { 'zh-CN': '学习失败', 'en-US': 'Learning Failed' },
   'legacy.learning_not_started': { 'zh-CN': '学习未开始', 'en-US': 'Learning Not Started' },

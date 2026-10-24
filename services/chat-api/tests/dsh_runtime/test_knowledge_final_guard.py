@@ -72,6 +72,41 @@ def test_multiple_grounded_searches_are_combined_without_outer_additions() -> No
     assert projected["payload"]["text"] == "每年 3 月、9 月申请。\n\n未按通知着装处罚 100 元/次。"
 
 
+def test_multiple_searches_do_not_repeat_near_identical_grounded_rows() -> None:
+    projector = KernelEventProjector()
+    guard = KnowledgeFinalGuard("仅基于内部知识：一到三月收入各是多少？")
+    first = "| 月份 | 收入 |\n| --- | --- |\n| 一月 | 17017.76 |\n| 二月 | 13456 |"
+    second = "| 月份 | 收入 |\n| --- | --- |\n| 一月 | 17,017.76 |\n| 三月 | 14567 |"
+    _search(projector, guard, cursor=1, call_id="search-1", answer=first)
+    _search(projector, guard, cursor=3, call_id="search-2", answer=second)
+    text = _project(guard, projector, _final("重复表格"))["payload"]["text"]
+    assert text.count("| 月份 | 收入 |") == 1
+    assert text.count("| --- | --- |") == 1
+    assert text.count("| 一月 |") == 1
+    assert "| 二月 | 13456 |" in text
+    assert "| 三月 | 14567 |" in text
+
+
+def test_similar_statements_with_different_numbers_remain_distinct() -> None:
+    projector = KernelEventProjector()
+    guard = KnowledgeFinalGuard("仅基于内部知识：A、B 模式几天开票？")
+    _search(projector, guard, cursor=1, call_id="search-1", answer="A 模式收到确认单后 5 个工作日内开票。")
+    _search(projector, guard, cursor=3, call_id="search-2", answer="B 模式收到确认单后 3 个工作日内开票。")
+    text = _project(guard, projector, _final("结算说明"))["payload"]["text"]
+    assert "A 模式收到确认单后 5 个工作日内开票。" in text
+    assert "B 模式收到确认单后 3 个工作日内开票。" in text
+
+
+def test_similar_statements_with_opposite_meaning_remain_distinct() -> None:
+    projector = KernelEventProjector()
+    guard = KnowledgeFinalGuard("仅基于内部知识：是否可以延期？")
+    _search(projector, guard, cursor=1, call_id="search-1", answer="满足条件后可以申请延期。")
+    _search(projector, guard, cursor=3, call_id="search-2", answer="未满足条件时不可以申请延期。")
+    text = _project(guard, projector, _final("申请规则"))["payload"]["text"]
+    assert "满足条件后可以申请延期。" in text
+    assert "未满足条件时不可以申请延期。" in text
+
+
 def test_unrelated_conversation_keeps_model_synthesis() -> None:
     projector = KernelEventProjector()
     guard = KnowledgeFinalGuard("请介绍天气")

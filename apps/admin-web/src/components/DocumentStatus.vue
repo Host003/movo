@@ -13,7 +13,7 @@
       <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 0-15.3-6.4" /><path d="M3 3v5h5" /><path d="M3 12a9 9 0 0 0 15.3 6.4" /><path d="M21 21v-5h-5" /></svg>
     </span>
   </button>
-  <div v-else class="doc-status-wrapper" :style="{ color: displayColor }" :title="qualityTitle">
+  <div v-else class="doc-status-wrapper" :style="{ color: displayColor }">
     <!-- SVG 图标 -->
     <span class="status-icon-box" v-html="state.icon"></span>
     <!-- 状态文本 -->
@@ -36,10 +36,6 @@ const emit = defineEmits<{
 }>();
 
 const { activeTheme } = useTheme();
-const qualityTitle = computed(() => {
-  const pages = props.row.parseQuality?.reviewPages || [];
-  return pages.length ? t('legacy.learning_review_pages', { pages: pages.join('、') }) : '';
-});
 const displayColor = computed(() => {
   if (activeTheme.value !== 'dark') return state.value.color;
   const color = state.value.color.toLowerCase();
@@ -97,12 +93,6 @@ const state = computed(() => {
   // 4. 学习完成
   // 解析状态与索引状态均成功 (succeeded)
   if (row.parseStatus === 'succeeded' && row.indexStatus === 'succeeded') {
-    if (row.parseQuality?.reviewPages?.length) {
-      return {
-        label: t('legacy.learning_review'), color: '#D97706', retryable: false,
-        icon: `<svg class="status-svg" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="7" stroke="#D97706" stroke-width="1.2"/><path d="M8 4v5m0 2v1" stroke="#D97706" stroke-width="1.5" stroke-linecap="round"/></svg>`
-      };
-    }
     return {
       label: t('legacy.learning_complete'),
       color: '#52C41A',

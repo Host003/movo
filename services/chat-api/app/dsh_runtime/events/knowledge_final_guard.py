@@ -8,6 +8,7 @@ from typing import Any
 from app.dsh_runtime.contracts import KernelEventEnvelope
 from app.dsh_runtime.events.projection import KernelEventProjector
 from app.knowledge.agents.answer_evidence_guard import ABSENCE_CLAIM, INSUFFICIENT
+from app.knowledge.agents.answer_aggregation import merge_grounded_answers
 from app.knowledge.retrieval.named_document import named_filename
 from app.dsh_runtime.model_gateway.tool_visibility import _KNOWLEDGE_ONLY_CUE
 
@@ -76,7 +77,7 @@ class KnowledgeFinalGuard:
             answer for answer in distinct
             if not any(marker in answer for marker in ("依据不足", "未找到足够依据", "无法据此回答", "不能据此判断原文不存在"))
         ]
-        return "\n\n".join(supported) if supported else INSUFFICIENT
+        return merge_grounded_answers(supported) if supported else INSUFFICIENT
 
 
 def _replace_text(projected: dict[str, Any], text: str, source: str) -> dict[str, Any]:
