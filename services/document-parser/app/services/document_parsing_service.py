@@ -16,6 +16,7 @@ from app.integrations.converters.libreoffice import convert_legacy_office_to_mod
 from app.integrations.storage import get_storage_adapter
 from app.repositories.job_repository import mark_job_succeeded, update_job_progress
 from app.services.pdf_ocr_policy import PdfOcrPolicy, inspect_pdf_ocr_policy
+from app.services.office_image_ocr import add_office_image_ocr
 from app.services.rag_chunk_optimizer import RagChunkOptions, build_rag_chunks
 from app.services.chunk_identifiers import extract_identifiers
 
@@ -77,6 +78,9 @@ def run_document_parse(job_id: str, request: ParseDocumentJobRequest) -> None:
         _write_json_artifact(artifact_storage, rag_chunks_key, {"chunkStage": "rag", "chunks": rag_chunks})
         _write_json_artifact(artifact_storage, chunks_key, {"chunkStage": "rag", "chunks": rag_chunks})
 
+    parse_quality = dict(parsed.raw.get("movoParseQuality") or {})
+    if office_image_quality := parsed.raw.get("movoOfficeImageOcr"):
+        parse_quality["officeEmbeddedImages"] = office_image_quality
     result = {
         "markdownKey": markdown_key,
         "jsonKey": json_key,
@@ -86,7 +90,7 @@ def run_document_parse(job_id: str, request: ParseDocumentJobRequest) -> None:
         "ragChunkCount": len(rag_chunks),
         "chunksKey": chunks_key,
         "chunkCount": len(rag_chunks),
-        "parseQuality": parsed.raw.get("movoParseQuality") or {},
+        "parseQuality": parse_quality,
     }
     update_job_progress(job_id, 90)
     post_callback(
@@ -114,12 +118,13 @@ def parse_document(path: Path, filename: str) -> ParsedDocument:
     if ext in SPREADSHEET_EXTENSIONS:
         from app.services.spreadsheet_ingest import parse_spreadsheet
 
-        return parse_spreadsheet(path)
+        return add_office_image_ocr(parse_spreadsheet(path), path, ext)
 
     try:
         from docling.document_converter import DocumentConverter  # type: ignore
     except ImportError:
-        return parse_with_fallback(path, ext)
+        parsed = parse_with_fallback(path, ext)
+        return add_office_image_ocr(parsed, path, ext) if ext in {"docx", "pptx"} else parsed
     else:
         pdf_ocr_policy = inspect_pdf_ocr_policy(path) if ext == "pdf" else None
         converter = _build_docling_converter(ext, pdf_ocr_policy=pdf_ocr_policy)
@@ -148,7 +153,8 @@ def parse_document(path: Path, filename: str) -> ParsedDocument:
             if quality.get("reviewPages"):
                 logger.warning("PDF pages remain unreadable after recovery: %s", quality["reviewPages"])
             markdown = "\n\n".join([markdown, *[item["text"] for item in raw_chunks if item.get("metadata", {}).get("sourceKind") == "native_text_recovery"]]).strip()
-        return ParsedDocument(markdown=markdown, raw=raw, raw_chunks=raw_chunks)
+        parsed = ParsedDocument(markdown=markdown, raw=raw, raw_chunks=raw_chunks)
+        return add_office_image_ocr(parsed, path, ext) if ext in {"docx", "pptx"} else parsed
 
 
 def _build_docling_converter(ext: str, *, pdf_ocr_policy: PdfOcrPolicy | None = None) -> Any:
