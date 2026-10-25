@@ -249,6 +249,7 @@ class ModelGatewayService:
                         ))
                     continue
                 text = "\n".join(str(block.get("text") or "") for block in blocks if block.get("type") == "text")
+                image_blocks = [block for block in blocks if block.get("type") == "image_url"]
                 calls = [
                     {
                         "id": str(block.get("id") or ""),
@@ -263,7 +264,9 @@ class ModelGatewayService:
             else:
                 text = str(content or "")
                 calls = []
-            result.append(Message(role=role, content=text, tool_calls=calls or None))
+                image_blocks = []
+            content: Any = ([{"type": "text", "text": text}, *image_blocks] if image_blocks and role == Role.USER else text)
+            result.append(Message(role=role, content=content, tool_calls=calls or None))
         return result
 
     @staticmethod

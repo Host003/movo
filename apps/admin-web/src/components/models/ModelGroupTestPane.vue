@@ -4,6 +4,7 @@ import axios from 'axios';
 import { t } from '@/composables/i18n';
 import { streamModelInstanceTest, testImageModelInstance, testKnowledgeModelInstance, type ModelInstanceItem } from '@/api/models';
 import { resolveModelTestKind } from './modelTestKind';
+import { useVisionCapabilitySuggestion } from '@/composables/useVisionCapabilitySuggestion';
 import FlaskOutline from '@vicons/ionicons5/es/FlaskOutline';
 import PlayOutline from '@vicons/ionicons5/es/PlayOutline';
 
@@ -12,6 +13,7 @@ const emit = defineEmits<{ (event: 'tested'): void; (event: 'select', id: string
 const modelId = ref('');
 const prompt = ref(t('legacy.reply_in_one_sentence_to_test_the_current_model'));
 const testing = ref(false);
+const visionSuggestion = useVisionCapabilitySuggestion();
 const result = ref('');
 const resultType = ref<'idle' | 'success' | 'failed'>('idle');
 const imageUrl = ref('');
@@ -63,6 +65,9 @@ async function run() {
       if (resultType.value === 'idle') resultType.value = 'success';
     }
     emit('tested');
+    if (kind.value === 'chat' && resultType.value === 'success') {
+      await visionSuggestion.check(model.value, () => emit('tested'));
+    }
   } catch (error) {
     result.value = errorText(error);
     resultType.value = 'failed';

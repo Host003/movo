@@ -44,6 +44,11 @@ watch(() => props.model?.id, async () => {
   }
 }, { immediate: true });
 watch(() => props.expanded, (value) => { if (value) open.value = true; });
+watch(() => props.model?.capabilities, (capabilities) => {
+  if (capabilities?.includes('vision') && !form.value.capabilities.includes('vision')) {
+    form.value.capabilities = [...form.value.capabilities, 'vision'];
+  }
+});
 
 async function save() {
   const warning = selectable.value ? extension?.validate?.(access.value) : null;

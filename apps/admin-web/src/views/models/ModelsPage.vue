@@ -335,6 +335,7 @@ import { providerLabel } from '@/components/models/providerLabels';
 import { resolveModelTestKind } from '@/components/models/modelTestKind';
 import ModelAccessExtensionPanel from '@/components/models/ModelAccessExtensionPanel.vue';
 import { useModelAccessExtension } from '@/composables/useModelAccessExtension';
+import { useVisionCapabilitySuggestion } from '@/composables/useVisionCapabilitySuggestion';
 
 
 interface ModelForm extends ModelInstancePayload {
@@ -350,6 +351,7 @@ const saving = ref(false);
 const testing = ref(false);
 const message = useMessage();
 const dialog = useDialog();
+const visionSuggestion = useVisionCapabilitySuggestion();
 const router = useRouter();
 const providers = ref<ModelProviderItem[]>([]);
 const instances = ref<ModelInstanceItem[]>([]);
@@ -756,6 +758,12 @@ async function runEditorTest() {
       testResultType.value = 'success';
     }
     await reload();
+    if (testResultType.value === 'success') {
+      await visionSuggestion.check(instances.value.find((item) => item.id === form.value.id), async () => {
+        form.value.capabilities = [...new Set([...form.value.capabilities, 'vision'])];
+        await reload();
+      });
+    }
   } catch (error) {
     testResultText.value = readError(error, t('legacy.test_failed'));
     testResultType.value = 'failed';
