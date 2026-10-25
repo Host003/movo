@@ -5,13 +5,10 @@ import re
 from app.knowledge.api.schemas import KnowledgeChunk, KnowledgeQARequest, KnowledgeQAResult
 from app.knowledge.citations.citation_resolver import parse_llm_json, resolve_citations
 from app.knowledge.prompting.knowledge_qa_prompt import build_knowledge_qa_messages
-from app.knowledge.agents.answer_evidence_guard import guard_absence_claim
-from app.knowledge.agents.answer_fact_guard import INSUFFICIENT, guard_numeric_claims
-from app.knowledge.agents.answer_support_guard import guard_supported_answer
 from app.knowledge.retrieval.retrieval_client import knowledge_retrieval_client
-from app.knowledge.retrieval.named_document import resolve_named_document
 from app.services.llm import LLMService
 
+INSUFFICIENT = "内部知识库中未找到足够依据。"
 
 _USED_CHUNK_IDS_RE = re.compile(
     r",?\s*[\"']?usedChunkIds[\"']?\s*:\s*\[[^\]]*]\s*}?\s*$",
@@ -59,7 +56,10 @@ class KnowledgeQAAgent:
                 content_type=item.contentType,
                 source_chunk_ids=item.sourceChunkIds,
                 ordinal=item.ordinal,
-                score=float(item.rerankScore if item.rerankScore is not None else item.score or 0),
+                score=float(
+                    item.rerankScore if item.rerankScore is not None else
+                    item.fusionScore if item.fusionScore is not None else item.score or 0
+                ),
                 rerank_score=float(item.rerankScore) if item.rerankScore is not None else None,
                 distance=item.distance,
                 metadata=item.metadata,
@@ -80,7 +80,7 @@ class KnowledgeQAAgent:
         messages = build_knowledge_qa_messages(request.query, chunks)
         raw = await LLMService(intent="knowledge_qa").chat_complete(messages, temperature=None)
         parsed = parse_llm_json(raw)
-        answer = _clean_answer_text(str(parsed.get("answer") or "")) or "内部知识库中未找到足够依据。"
+        answer = _clean_answer_text(str(parsed.get("answer") or "")) or INSUFFICIENT
         raw_used = parsed.get("usedChunkIds") or parsed.get("used_chunk_ids") or []
         if isinstance(raw_used, str):
             used_chunk_ids = [raw_used]
@@ -93,19 +93,6 @@ class KnowledgeQAAgent:
         citations = resolve_citations(chunks, used_chunk_ids)
         if not citations:
             answer = INSUFFICIENT
-        else:
-            answer = guard_absence_claim(answer, [item.text for item in citations])
-        if citations and answer not in {
-            "内部知识库中未找到足够依据。",
-            "当前已检索片段不足以确认，不能据此判断原文不存在该信息。",
-        }:
-            answer = guard_supported_answer(
-                answer, [item.text for item in citations], parsed.get("supportChecks"),
-            )
-        answer = guard_numeric_claims(answer, [
-            "\n".join([item.text, str((item.metadata or {}).get("document_title") or "")])
-            for item in citations
-        ])
         return KnowledgeQAResult(
             answer=answer,
             citations=citations,
@@ -115,19 +102,6 @@ class KnowledgeQAAgent:
         )
 
     async def answer(self, request: KnowledgeQARequest) -> KnowledgeQAResult:
-        named = await resolve_named_document(request)
-        if named is not None:
-            if named.status != "ready":
-                messages = {
-                    "not_found": f"未找到当前用户可访问的指定知识文档《{named.filename}》。",
-                    "ambiguous": f"存在多份同名知识文档《{named.filename}》，请指定目录或知识库。",
-                    "parse_failed": f"指定知识文档《{named.filename}》已上传，但解析失败，当前无法据此回答。请在管理后台检查并重新学习。",
-                    "index_failed": f"指定知识文档《{named.filename}》已解析，但学习索引失败，当前无法据此回答。请在管理后台检查并重新学习。",
-                    "not_ready": f"指定知识文档《{named.filename}》尚未学习完成，当前无法据此回答。",
-                    "empty": f"指定知识文档《{named.filename}》没有可用的知识片段，当前无法据此回答。",
-                }
-                return KnowledgeQAResult(answer=messages[named.status], document_status=named.status)
-            return await self.answer_from_chunks(request, list(named.chunks))
         chunks = await self.retrieve_chunks(request)
         return await self.answer_from_chunks(request, chunks)
 

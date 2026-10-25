@@ -18,7 +18,6 @@ from app.dsh_runtime.events.live_stream import LiveTurnStream
 from app.dsh_runtime.events.turn_channel import TurnEventRegistry
 from app.dsh_runtime.events.tool_presentation import tool_presentations
 from app.dsh_runtime.events.authoritative_delivery import AuthoritativeDeliveryGuard, DeliveryStore
-from app.dsh_runtime.events.knowledge_final_guard import KnowledgeFinalGuard
 from app.dsh_runtime.evidence_projection import (
     build_execution_evidence_event,
     project_execution_evidence,
@@ -127,7 +126,6 @@ class DshTurnRunner:
                 user_id=str(binding["user_id"]),
                 message_id=message_id,
             )
-            knowledge_guard = KnowledgeFinalGuard(text)
             # Re-baseline BEFORE send: after a resume the host journal is
             # rebuilt with cursors renumbered from 1, so the durable cursor
             # may point inside reimported history. Only post-head events flow.
@@ -166,7 +164,6 @@ class DshTurnRunner:
                     tool_presentations=tool_ui,
                 )
                 projected = await delivery_guard.apply(event, projected)
-                projected = knowledge_guard.apply(event, projected)
                 if (
                     projected is not None
                     and projected.get("item_kind") == "tool"

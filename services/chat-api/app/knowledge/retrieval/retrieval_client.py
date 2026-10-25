@@ -66,9 +66,9 @@ class KnowledgeRetrievalClient:
                 all_items.extend(result.items)
 
         all_items.sort(
-            key=lambda item: (
-                item.matchType == "exact_identifier",
-                float(item.rerankScore if item.rerankScore is not None else item.score or 0),
+            key=lambda item: float(
+                item.rerankScore if item.rerankScore is not None else
+                item.fusionScore if item.fusionScore is not None else item.score or 0
             ),
             reverse=True,
         )

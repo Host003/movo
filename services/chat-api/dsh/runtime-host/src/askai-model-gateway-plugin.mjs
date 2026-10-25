@@ -21,6 +21,8 @@ async function *readNdjson(response) {
 }
 
 export class AskaiModelGatewayAdapter extends LlmAdapter {
+  #knowledgeModeBySession = new Map()
+
   constructor(config) {
     super()
     this.config = Object.freeze(structuredClone(config))
@@ -29,6 +31,14 @@ export class AskaiModelGatewayAdapter extends LlmAdapter {
   updateCredential({ gatewayUrl, accessToken }) {
     if (!gatewayUrl || !accessToken) throw new Error('MOVO Model Gateway credential is incomplete')
     this.config = Object.freeze({ ...this.config, gatewayUrl, accessToken })
+  }
+
+  setKnowledgeMode(sessionId, enabled) {
+    this.#knowledgeModeBySession.set(sessionId, enabled === true)
+  }
+
+  clearKnowledgeMode(sessionId) {
+    this.#knowledgeModeBySession.delete(sessionId)
   }
 
   async listModels(provider) {
@@ -68,6 +78,7 @@ export class AskaiModelGatewayAdapter extends LlmAdapter {
         tools: options.tools,
         maxTokens: options.maxTokens,
         sessionId: options.sessionId,
+        knowledgeQaEnabled: this.#knowledgeModeBySession.get(options.sessionId) === true,
       }),
       signal: options.signal,
     })

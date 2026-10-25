@@ -571,12 +571,6 @@
                     </n-form-item>
                   </n-grid-item>
                   <n-grid-item>
-                    <n-form-item :label="t('legacy.max_chunks_per_document')">
-                      <n-input-number v-model:value="knowledgeForm.retrieval.maxChunksPerDocument" :min="1" :max="50" style="width: 100%" />
-                      <div class="field-help">{{ t('legacy.used_during_q_a_retrieval_to_prevent_a_single') }}</div>
-                    </n-form-item>
-                  </n-grid-item>
-                  <n-grid-item>
                     <n-form-item :label="t('legacy.enable_metadata_filtering')">
                       <n-switch v-model:value="knowledgeForm.retrieval.metadataFiltersEnabled" />
                     </n-form-item>
@@ -920,8 +914,6 @@ function defaultKnowledgeSettings(): KnowledgeSettings {
       candidateTopK: 50,
       scoreThreshold: 0,
       metadataFiltersEnabled: true,
-      maxChunksPerDocument: 5,
-      dedupByDocument: true,
       hybrid: {
         vectorWeight: 0.7,
         keywordWeight: 0.3,

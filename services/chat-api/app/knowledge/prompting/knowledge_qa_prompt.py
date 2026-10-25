@@ -27,17 +27,11 @@ answer 字段必须使用 Markdown 文本，并符合以下回答风格：
 - 不要出现“根据候选集的信息”“根据段落内容”“根据内部知识片段”等模板化表述。
 - 不要在 answer 中直接堆叠 chunkId；引用由 usedChunkIds 字段表达。
 
-对 answer 中的每个独立陈述（以句号、分号或换行分隔）给出一条 supportChecks：
-- statement 必须从 answer 原样复制，保留 Markdown 列表前缀；evidence 必须从实际使用的引用片段中逐字摘录。
-- 只有原文直接支持且与用户所问相关时 supported 才能为 true；适用条件不同或只是相似流程时必须为 false。
-- 表格的标题行和分隔行属于结构，不需要 supportChecks；每条数据行仍需核验。
-
 请严格输出 JSON，不要输出 Markdown 代码块。
 JSON 格式：
 {
   "answer": "面向用户的 Markdown 答案",
-  "usedChunkIds": ["document_id:chunk_000001"],
-  "supportChecks": [{"statement": "从 answer 原样复制的一条陈述", "supported": true, "evidence": "来自引用片段的原文短引"}]
+  "usedChunkIds": ["document_id:chunk_000001"]
 }
 
 usedChunkIds 必须填写候选中提供的 citationId，而不是只填写 chunkId。不同文档可能存在相同 chunkId。
@@ -56,7 +50,6 @@ def build_knowledge_qa_messages(query: str, chunks: list[KnowledgeChunk]) -> lis
                     f"citationId: {chunk.document_id}:{chunk.chunk_id}",
                     f"document: {str((chunk.metadata or {}).get('document_title') or chunk.document_id)}",
                     f"title: {title}",
-                    f"score: {chunk.score:.4f}",
                     "content:",
                     text.strip(),
                 ]

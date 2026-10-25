@@ -29,6 +29,7 @@ class RetrievalChunkItem(BaseModel):
     score: float = 0
     distance: Optional[float] = None
     rerankScore: Optional[float] = None
+    fusionScore: Optional[float] = None
     matchType: str = ""
     metadata: Dict[str, Any] = Field(default_factory=dict)
 

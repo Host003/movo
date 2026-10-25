@@ -43,6 +43,24 @@ def test_unreadable_image_page_keeps_internal_diagnostic(monkeypatch):
     assert quality["reviewPages"] == [1]
 
 
+def test_short_native_clause_is_recovered_on_existing_text_page(monkeypatch):
+    body = "常规规定文字内容覆盖本页其他段落。" * 12
+    _reader(monkeypatch, body + "\n严禁申领")
+    chunks, quality = supplement_pdf_chunks(Path("sample.pdf"), [{"text": body, "pageNo": 1}])
+    assert any("严禁申领" in chunk["text"] for chunk in chunks[1:])
+    assert quality["pages"][0]["nativeChars"] > 80
+
+
+def test_image_text_is_recovered_even_when_page_has_other_chunks(monkeypatch):
+    _reader(monkeypatch, "页眉与说明文字。", images=True)
+    from app.services import pdf_page_ocr
+
+    monkeypatch.setattr(pdf_page_ocr, "extract_page_ocr_text", lambda *_: "页眉与说明文字。\n图片中的办理条件")
+    chunks, quality = supplement_pdf_chunks(Path("sample.pdf"), [{"text": "页眉与说明文字。", "pageNo": 1}])
+    assert any("图片中的办理条件" in chunk["text"] for chunk in chunks[1:])
+    assert quality["pages"][0]["ocrAttempted"] is True
+
+
 def test_page_ocr_discards_low_confidence_and_keyboard_noise(monkeypatch):
     from PIL import Image
     from app.services import pdf_page_ocr

@@ -9,10 +9,6 @@ from pathlib import Path
 from typing import Any
 
 
-MIN_NATIVE_CHARS = 80
-MIN_COVERAGE = 0.65
-MIN_MISSING_CHARS = 16
-_CRITICAL_VALUE = re.compile(r"\d+(?:\.\d+)?\s*%|[A-Za-z]{1,8}\d{4,}")
 logger = logging.getLogger(__name__)
 
 
@@ -30,12 +26,12 @@ def supplement_pdf_chunks(path: Path, chunks: list[dict[str, Any]]) -> tuple[lis
         page_chunks = [item for item in chunks if item.get("pageNo") == page_no]
         parsed_text = "\n".join(str(item.get("text") or "") for item in page_chunks)
         coverage = _coverage(native_chars, _characters(parsed_text))
-        native_missing = _missing_lines(native_text, parsed_text) if len(native_chars) >= MIN_NATIVE_CHARS or not page_chunks else []
+        native_missing = _missing_lines(native_text, parsed_text)
         ocr_missing: list[str] = []
         ocr_attempted = False
         ocr_failed = False
         try:
-            has_images = bool(page.images) if not page_chunks and len(native_chars) < MIN_NATIVE_CHARS else False
+            has_images = bool(page.images)
         except Exception:
             has_images = False
         if has_images:
@@ -50,10 +46,7 @@ def supplement_pdf_chunks(path: Path, chunks: list[dict[str, Any]]) -> tuple[lis
                 logger.exception("PDF page OCR failed for page %s", page_no)
         missing_lines = list(dict.fromkeys([*native_missing, *ocr_missing]))
         missing_chars = sum(_characters(line).total() for line in missing_lines)
-        recovered = bool(missing_lines) and (
-            not page_chunks or coverage < MIN_COVERAGE or missing_chars >= MIN_MISSING_CHARS
-            or any(_CRITICAL_VALUE.search(line) for line in missing_lines)
-        )
+        recovered = bool(missing_lines)
         recovery_text = "\n".join(missing_lines) if recovered else ""
         if recovered:
             ordinal = len(chunks)
@@ -65,8 +58,8 @@ def supplement_pdf_chunks(path: Path, chunks: list[dict[str, Any]]) -> tuple[lis
                 "metadata": {"parser": "pypdf", "sourceKind": "native_text_recovery", "sourceAnchor": {"pageNo": page_no}},
             })
         report.append({
-            "pageNo": page_no, "nativeChars": len(native_chars),
-            "parsedChars": len(_characters(parsed_text)),
+            "pageNo": page_no, "nativeChars": native_chars.total(),
+            "parsedChars": _characters(parsed_text).total(),
             "nativeCoverage": round(coverage, 3),
             "finalNativeCoverage": round(_coverage(native_chars, _characters("\n".join([parsed_text, recovery_text]))), 3),
             "nativeTextRecovered": recovered and bool(native_missing),
@@ -103,7 +96,7 @@ def _missing_lines(native_text: str, parsed_text: str) -> list[str]:
         line = line.strip()
         grams = _trigrams(line)
         if not grams:
-            if _CRITICAL_VALUE.search(line) and line not in parsed_text:
+            if _characters(line).total() and line not in parsed_text:
                 missing.append(line)
             continue
         if _coverage(grams, available) < 0.8:

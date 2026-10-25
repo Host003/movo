@@ -152,8 +152,6 @@ export const messages = {
   'legacy.min_chunk_size': { 'zh-CN': '最小分段长度', 'en-US': 'Min Chunk Size' },
   'legacy.candidate_top_k': { 'zh-CN': '候选召回数', 'en-US': 'Candidate Top K' },
   'legacy.score_threshold': { 'zh-CN': '分数阈值', 'en-US': 'Score Threshold' },
-  'legacy.max_chunks_per_document': { 'zh-CN': '每个文档最多取几个片段', 'en-US': 'Max Chunks Per Document' },
-  'legacy.used_during_q_a_retrieval_to_prevent_a_single': { 'zh-CN': '问答检索时使用，避免同一篇文档占用太多上下文；不影响文档上传后的实际切段。', 'en-US': 'Used during Q&A retrieval to prevent a single document from consuming too much context; does not affect the actual chunking of uploaded documents.' },
   'legacy.enable_metadata_filtering': { 'zh-CN': '启用元数据过滤', 'en-US': 'Enable Metadata Filtering' },
   'legacy.hybrid_retrieval_details': { 'zh-CN': '混合检索细节', 'en-US': 'Hybrid Retrieval Details' },
   'legacy.vector_weight': { 'zh-CN': '向量权重', 'en-US': 'Vector Weight' },

@@ -50,12 +50,14 @@ def test_identifier_extraction_uses_exact_token_boundaries():
     from app.services.chunk_identifiers import extract_identifiers
     assert extract_identifiers("GR0010213、GR00102130 GR0010213") == ["GR0010213", "GR00102130"]
     assert extract_identifiers("订单 AB-123456 与项目 PX2024001") == ["AB-123456", "PX2024001"]
+    assert extract_identifiers("订单 12345678 与流程 AB12") == ["12345678", "AB12"]
 
 
 def test_rag_chunk_carries_search_identifier_for_persistence():
     from app.services.rag_chunk_optimizer import build_rag_chunks
     chunks = build_rag_chunks([{"chunkId": "raw_1", "text": "门店编号：GR0010213；一月收入：17017", "contentType": "table_row"}])
-    assert chunks[0]["searchIdentifiers"] == ["GR0010213"]
+    assert "GR0010213" in chunks[0]["searchIdentifiers"]
+    assert "17017" in chunks[0]["searchIdentifiers"]
 
 
 def test_identifier_index_uses_chunk_content_not_repeated_document_title():
@@ -67,7 +69,7 @@ def test_identifier_index_uses_chunk_content_not_repeated_document_title():
     assert chunks[0]["searchIdentifiers"] == []
 
 
-def test_exact_identifier_row_precedes_semantic_results(monkeypatch):
+def test_exact_identifier_row_joins_semantic_results_without_excluding_them(monkeypatch):
     from app.domain.jobs import RetrievalSearchRequest
     from app.services import retrieval_service
 
@@ -78,7 +80,7 @@ def test_exact_identifier_row_precedes_semantic_results(monkeypatch):
     monkeypatch.setattr(retrieval_service, "exact_identifier_candidates", lambda *_, **__: [{"documentId": "store", "chunkId": "row", "score": 1.0}])
     request = RetrievalSearchRequest(query="GR0010213 收入", mainId="tenant", userId="user")
     result = retrieval_service.search_knowledge(request)
-    assert [item["chunkId"] for item in result["items"]] == ["row", "semantic"]
+    assert {item["chunkId"] for item in result["items"]} == {"row", "semantic"}
 
 
 def test_denied_rows_do_not_crowd_out_later_authorized_exact_row(monkeypatch):

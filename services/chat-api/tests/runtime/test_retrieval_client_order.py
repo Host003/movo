@@ -5,7 +5,7 @@ import asyncio
 from app.knowledge.retrieval import retrieval_client as module
 
 
-def test_exact_identifier_survives_cross_knowledge_base_merge(monkeypatch):
+def test_cross_knowledge_base_merge_uses_relevance_not_match_type(monkeypatch):
     class Response:
         def __init__(self, data):
             self.data = data
@@ -35,7 +35,7 @@ def test_exact_identifier_survives_cross_knowledge_base_merge(monkeypatch):
     client.service_token = "token"
     client.timeout = 1
     result = asyncio.run(client.search(query="PX2024001", main_id="tenant", knowledge_base_ids=["first", "second"], top_n=1))
-    assert [item.chunkId for item in result.items] == ["b"]
+    assert [item.chunkId for item in result.items] == ["a"]
 
 
 def test_retrieval_mode_is_controlled_by_processing_service_config(monkeypatch):

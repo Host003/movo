@@ -5,8 +5,12 @@ from __future__ import annotations
 import re
 
 
-IDENTIFIER = re.compile(r"(?<![A-Za-z0-9])[A-Za-z]{1,12}[A-Za-z0-9-]*\d{4,}[A-Za-z0-9-]*(?![A-Za-z0-9])")
+IDENTIFIER = re.compile(r"(?<![A-Za-z0-9])[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*(?![A-Za-z0-9])")
 
 
 def extract_identifiers(text: str) -> list[str]:
-    return list(dict.fromkeys(match.group().upper() for match in IDENTIFIER.finditer(text)))
+    return list(dict.fromkeys(
+        token.upper()
+        for match in IDENTIFIER.finditer(text)
+        if (token := match.group()) and len(token.replace("-", "")) >= 4 and any(char.isdigit() for char in token)
+    ))

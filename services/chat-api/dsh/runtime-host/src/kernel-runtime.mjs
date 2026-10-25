@@ -234,6 +234,7 @@ export class KernelRuntime {
     this.#temporalContext.update(sessionId, temporalContext)
     const resolvedTurnContext = resolveSkillTurnContext(this.modelProfile, turnContext)
     this.#turnContext.update(sessionId, resolvedTurnContext.context)
+    this.#modelAdapter?.setKnowledgeMode(sessionId, resolvedTurnContext.context?.knowledge_qa_enabled === true)
     this.#skillInvocations.expectManual(sessionId, resolvedTurnContext.skillName)
     const message = createUserMessage({
       content: content.map((block, index) => {
@@ -348,6 +349,7 @@ export class KernelRuntime {
     this.#handles.delete(sessionId)
     this.#temporalContext.remove(sessionId)
     this.#turnContext.remove(sessionId)
+    this.#modelAdapter?.clearKnowledgeMode(sessionId)
     this.#desktopApprovals.clearSession(sessionId)
     this.#userQuestions.clearSession(sessionId)
     await handle.agent.whenIdle()
